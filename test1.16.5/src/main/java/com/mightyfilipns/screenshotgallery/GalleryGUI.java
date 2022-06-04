@@ -107,6 +107,7 @@ public class GalleryGUI extends Screen {
 	}
 	@Override
 	public void resize(Minecraft pMinecraft, int pWidth, int pHeight) {
+		// TODO Auto-generated method stub
 		dym.removeAll(dym);
 		renderd.removeAll(renderd);
 		super.resize(pMinecraft, pWidth, pHeight);
@@ -127,14 +128,13 @@ public class GalleryGUI extends Screen {
 			}
 			torender.add(i + (scrolleff * perrow));
 		}
-		/*
 		for (int i = 0; i < perrow; i++) {
 			int toadd = torender.get(torender.size() - 1) + 1;
 			if (toadd >= files.length) {
 				break;
 			}
 			//torender.add(torender.get(torender.size() - 1) + 1);
-		}*/
+		}
 		
 		System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));
 		System.out.println(torender);
@@ -208,6 +208,11 @@ public class GalleryGUI extends Screen {
 				ndym.add(loadimgresized(files[torender.get(i)]));
 			}
 			dym.addAll(0, ndym);
+			//System.out.println(dym.size()-1);
+			for (int i = 0; i < perrow; i++) 
+			{
+				//dym.set(dym.size()-i-1, loadimgresized(files[torender.get(torender.size()-i-1)]));				
+			}
 			renderd = new ArrayList<Integer>(torender);
 			//System.out.println("scroll up");
 			// scroll up

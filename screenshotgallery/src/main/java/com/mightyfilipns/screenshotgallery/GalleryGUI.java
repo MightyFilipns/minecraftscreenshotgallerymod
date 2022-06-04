@@ -1,5 +1,6 @@
  package com.mightyfilipns.screenshotgallery;
 
+import java.awt.geom.Arc2D.Double;
 import java.io.Console;
 import java.io.File;
 import java.io.FileFilter;
@@ -119,21 +120,18 @@ public class GalleryGUI extends Screen {
 		int v1 = (int) Math.ceil((double) height / (double) a);
 		int visible = (int) v1 * perrow;
 		int scrolleff = (int) Math.floor(scroll / a);
+		System.out.println((double)scroll/(double)a);
+		if((double)scroll%(double)a <= 10)
+		{
+			visible+=perrow;
+		}
 		for (int i = 0; i < visible; i++) 
 		{
 			if(i+(scrolleff*perrow) >= files.length)
 			{
 				notdis.add(i+(scrolleff*perrow));
-				//break;
 			}
 			torender.add(i + (scrolleff * perrow));
-		}
-		for (int i = 0; i < perrow; i++) {
-			int toadd = torender.get(torender.size() - 1) + 1;
-			if (toadd >= files.length) {
-				break;
-			}
-			//torender.add(torender.get(torender.size() - 1) + 1);
 		}
 		
 		System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));

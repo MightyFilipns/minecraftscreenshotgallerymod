@@ -111,6 +111,7 @@ public class GalleryGUI extends Screen {
 		// TODO Auto-generated method stub
 		dym.removeAll(dym);
 		renderd.removeAll(renderd);
+		scroll = 0;
 		super.resize(pMinecraft, pWidth, pHeight);
 	}
 	private void updateimgs() {
@@ -197,7 +198,7 @@ public class GalleryGUI extends Screen {
 				{
 					for (int i = 0; i < perrow; i++) 
 					{
-						dym.remove((dym.size() - 1) - i);
+						dym.remove(dym.size() - 1);
 					}		
 				}		
 			}
@@ -209,6 +210,10 @@ public class GalleryGUI extends Screen {
 			//System.out.println(dym.size()-1);
 			for (int i = 0; i < perrow; i++) 
 			{
+				if(dym.get(dym.size()-i-1) == null)
+				{
+					continue;
+				}
 				//dym.set(dym.size()-i-1, loadimgresized(files[torender.get(torender.size()-i-1)]));				
 			}
 			renderd = new ArrayList<Integer>(torender);

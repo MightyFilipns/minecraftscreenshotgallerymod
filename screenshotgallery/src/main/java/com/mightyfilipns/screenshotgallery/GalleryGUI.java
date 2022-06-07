@@ -1,5 +1,6 @@
  package com.mightyfilipns.screenshotgallery;
 
+import java.awt.Point;
 import java.awt.geom.Arc2D.Double;
 import java.io.Console;
 import java.io.File;
@@ -9,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -16,10 +18,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.client.renderer.texture.NativeImage.PixelFormat;
 import net.minecraft.util.text.StringTextComponent;
 
 public class GalleryGUI extends Screen {
 	private static final Minecraft INSTANCE = Minecraft.getInstance();
+	public static DynamicTexture whiteimg = new DynamicTexture(whitesq(10, 10));
 	List<DynamicTexture> dym = new ArrayList<DynamicTexture>();
 	List<Integer> torender = new ArrayList<Integer>();
 	List<Integer> renderd = new ArrayList<Integer>();
@@ -35,9 +39,12 @@ public class GalleryGUI extends Screen {
 	int scrollmaxvalue;
 	int maxheight;
 	static GalleryGUI ins = null;
+	static int hoverborder = 10; 
+	int lasthoverover = -1;
 	public void stop()
 	{
 		int aa = 0;
+		//whiteimg = new DynamicTexture(whitesq(10, 10));
 	}
 	protected GalleryGUI() {
 		super(new StringTextComponent("Gallery Gui"));
@@ -57,7 +64,14 @@ public class GalleryGUI extends Screen {
 		updateimgs();
 		return super.mouseScrolled(pMouseX, pMouseY, pDelta);
 	}
-
+	
+	@Override
+	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
+	{
+		// TODO open an edit menu
+		return super.mouseClicked(pMouseX, pMouseY, pButton);
+	}
+	
 	@Override
 	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks) {
 		perrow = Math.max(1, Math.floorDiv(width, screenshotxsize));
@@ -66,9 +80,9 @@ public class GalleryGUI extends Screen {
 		this.renderBackground(pMatrixStack);
 		int pos1 = 0;
 		int pos2 = 0;
-
 		calcscroll();
 		pos2 = renderd.get(0)/perrow;
+		lasthoverover = -1;
 		for (DynamicTexture item : dym) 
 		{
 			if (pos1 == perrow) {
@@ -77,9 +91,22 @@ public class GalleryGUI extends Screen {
 			}
 			if(item != null)
 			{
+				
+				int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize));
+				int y = (margin * (pos2 + 1) + (112 * pos2) - scroll);
 				item.bind();
-				blit(pMatrixStack, margin * (pos1 + 1) + (pos1 * screenshotxsize),
-						margin * (pos2 + 1) + (112 * pos2) - scroll, screenshotxsize, 112, 0, 0, 1, 1, 1, 1);				
+				blit(pMatrixStack,x,y,screenshotxsize, 112, 0, 0, 1, 1, 1, 1);
+				if(iswithin(pMouseY, y, y+112) && iswithin(pMouseX, x, x+screenshotxsize))
+				{
+					whiteimg.bind();
+					blit(pMatrixStack,x,y,hoverborder,112,0 , 0, 1, 1, 1, 1);
+					blit(pMatrixStack,x,y,screenshotxsize,hoverborder,0 , 0, 1, 1, 1, 1);
+					blit(pMatrixStack,x+screenshotxsize-hoverborder,y,hoverborder,112,0 , 0, 1, 1, 1, 1);
+					blit(pMatrixStack,x,y+112-hoverborder,screenshotxsize,hoverborder,0 , 0, 1, 1, 1, 1);
+					lasthoverover = pos2*perrow+pos1;
+					System.out.println(lasthoverover);
+				}
+				
 			}
 			pos1++;
 		}
@@ -94,7 +121,8 @@ public class GalleryGUI extends Screen {
 	@Override
 	protected void init() {
 		super.init();
-		if (!screenshootdir.exists()) {
+		if (!screenshootdir.exists()) 
+		{
 			return;
 		}
 		perrow = Math.max(1, Math.floorDiv(width, screenshotxsize));
@@ -108,7 +136,6 @@ public class GalleryGUI extends Screen {
 	}
 	@Override
 	public void resize(Minecraft pMinecraft, int pWidth, int pHeight) {
-		// TODO Auto-generated method stub
 		dym.removeAll(dym);
 		renderd.removeAll(renderd);
 		scroll = 0;
@@ -121,7 +148,7 @@ public class GalleryGUI extends Screen {
 		int v1 = (int) Math.ceil((double) height / (double) a);
 		int visible = (int) v1 * perrow;
 		int scrolleff = (int) Math.floor(scroll / a);
-		System.out.println((double)scroll/(double)a);
+		//System.out.println((double)scroll/(double)a);
 		if((double)scroll%(double)a <= 10)
 		{
 			visible+=perrow;
@@ -135,8 +162,8 @@ public class GalleryGUI extends Screen {
 			torender.add(i + (scrolleff * perrow));
 		}
 		
-		System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));
-		System.out.println(torender);
+		//System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));
+		//System.out.println(torender);
 		if (renderd.size() == 0) 
 		{
 			int tol = Math.min(files.length, torender.size());
@@ -207,14 +234,12 @@ public class GalleryGUI extends Screen {
 				ndym.add(loadimgresized(files[torender.get(i)]));
 			}
 			dym.addAll(0, ndym);
-			//System.out.println(dym.size()-1);
 			for (int i = 0; i < perrow; i++) 
 			{
 				if(dym.get(dym.size()-i-1) == null)
 				{
 					continue;
-				}
-				//dym.set(dym.size()-i-1, loadimgresized(files[torender.get(torender.size()-i-1)]));				
+				}			
 			}
 			renderd = new ArrayList<Integer>(torender);
 			//System.out.println("scroll up");
@@ -237,6 +262,8 @@ public class GalleryGUI extends Screen {
 		return null;
 	}
 
+	
+	
 	private static NativeImage resize(int width, int height, NativeImage org) {
 		NativeImage img = new NativeImage(width, height, false);
 		double x_ratio = org.getWidth() / (double) width;
@@ -251,6 +278,17 @@ public class GalleryGUI extends Screen {
 		}
 		return img;
 	}
+	static boolean iswithin(int value,int lowerlimit,int upperlimit)
+	{
+		if(value >= lowerlimit && value <= upperlimit)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	static <T> T getlast(List<T> toget)
 	{
 		if(toget == null || toget.size() == 0)
@@ -259,5 +297,16 @@ public class GalleryGUI extends Screen {
 		}
 		return toget.get(toget.size()-1);
 	}
-
+	static NativeImage whitesq(int x,int y)
+	{
+		NativeImage ni = new NativeImage(PixelFormat.RGBA,x,y,false);
+		for (int i = 0; i < x; i++) 
+		{
+			for (int j = 0; j < y; j++) 
+			{
+				ni.setPixelRGBA(i, j, -1);
+			}
+		}
+		return ni;
+	}
 }

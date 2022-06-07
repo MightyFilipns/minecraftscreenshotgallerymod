@@ -53,8 +53,7 @@ public class GalleryGUIMain
     KeyBinding kb =  new KeyBinding("Open Gallery", 71 , "Gallery Mod");
     private void setup(final FMLCommonSetupEvent event)
     {
-        // some preinit code
-    
+    	
     }
     private void doClientStuff(final FMLClientSetupEvent event) {
         // do something that can only be done on the client

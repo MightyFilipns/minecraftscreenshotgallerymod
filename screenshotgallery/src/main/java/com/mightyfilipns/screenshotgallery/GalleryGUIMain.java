@@ -82,10 +82,14 @@ public class GalleryGUIMain
     @SubscribeEvent
     public void keyb(KeyboardKeyEvent e)
     {
-    	//System.out.println(e.getKeyCode());
+    	System.out.println(e.getKeyCode());
     	if(e.getKeyCode() == 65)
     	{
     		GalleryGUI.ins.stop();    		
+    	}
+    	if(e.getKeyCode() == 256)
+    	{
+    		//esc key
     	}
     }
     @SubscribeEvent

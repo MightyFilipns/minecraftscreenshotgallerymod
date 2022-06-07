@@ -41,10 +41,12 @@ public class GalleryGUI extends Screen {
 	static GalleryGUI ins = null;
 	static int hoverborder = 10; 
 	int lasthoverover = -1;
+	
+	boolean editmode = false;
+	DynamicTexture chosen = null;
 	public void stop()
 	{
 		int aa = 0;
-		//whiteimg = new DynamicTexture(whitesq(10, 10));
 	}
 	protected GalleryGUI() {
 		super(new StringTextComponent("Gallery Gui"));
@@ -68,6 +70,11 @@ public class GalleryGUI extends Screen {
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
+		if(hoverborder != -1)
+		{
+			editmode = true;
+			chosen = loadimg(files[lasthoverover]);	
+		}
 		// TODO open an edit menu
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
@@ -80,6 +87,12 @@ public class GalleryGUI extends Screen {
 		this.renderBackground(pMatrixStack);
 		int pos1 = 0;
 		int pos2 = 0;
+		if(editmode)
+		{
+			int m2 = 30;
+			//draw edit menu
+		}
+		
 		calcscroll();
 		pos2 = renderd.get(0)/perrow;
 		lasthoverover = -1;
@@ -112,7 +125,25 @@ public class GalleryGUI extends Screen {
 		}
 		super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
 	}
-
+	@Override
+	public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) 
+	{
+		if(pKeyCode == 256)
+		{
+			editmode = false;
+		}
+		return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+	}
+	@Override
+	public boolean shouldCloseOnEsc() 
+	{
+		if(editmode)
+		{
+			return false;
+		}
+		return true;
+	}
+	
 	@Override
 	public boolean isPauseScreen() {
 		return true;
@@ -262,6 +293,18 @@ public class GalleryGUI extends Screen {
 		return null;
 	}
 
+	public DynamicTexture loadimg(File img) {
+		NativeImage nativeimage = null;
+		try (InputStream inputstream = new FileInputStream(img.getAbsoluteFile())) {
+			nativeimage = NativeImage.read(inputstream);
+			return new DynamicTexture(nativeimage);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	
 	
 	private static NativeImage resize(int width, int height, NativeImage org) {

@@ -16,10 +16,14 @@ import java.util.List;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.NativeImage.PixelFormat;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.fml.client.gui.widget.Slider;
 
 public class GalleryGUI extends Screen {
 	private static final Minecraft INSTANCE = Minecraft.getInstance();
@@ -41,7 +45,6 @@ public class GalleryGUI extends Screen {
 	static GalleryGUI ins = null;
 	static int hoverborder = 10; 
 	int lasthoverover = -1;
-	
 	boolean editmode = false;
 	DynamicTexture chosen = null;
 	public void stop()
@@ -70,7 +73,7 @@ public class GalleryGUI extends Screen {
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
-		if(hoverborder != -1)
+		if(lasthoverover > -1)
 		{
 			editmode = true;
 			chosen = loadimg(files[lasthoverover]);	
@@ -90,7 +93,8 @@ public class GalleryGUI extends Screen {
 		if(editmode)
 		{
 			int m2 = 30;
-			//draw edit menu
+			chosen.bind();
+			blit(pMatrixStack,m2,m2,width-(2*m2),height-(2*m2),0 , 0, 1, 1, 1, 1);
 		}
 		
 		calcscroll();
@@ -98,6 +102,10 @@ public class GalleryGUI extends Screen {
 		lasthoverover = -1;
 		for (DynamicTexture item : dym) 
 		{
+			if(editmode)
+			{
+				break;
+			}
 			if (pos1 == perrow) {
 				pos1 = 0;
 				pos2++;
@@ -117,7 +125,7 @@ public class GalleryGUI extends Screen {
 					blit(pMatrixStack,x+screenshotxsize-hoverborder,y,hoverborder,112,0 , 0, 1, 1, 1, 1);
 					blit(pMatrixStack,x,y+112-hoverborder,screenshotxsize,hoverborder,0 , 0, 1, 1, 1, 1);
 					lasthoverover = pos2*perrow+pos1;
-					System.out.println(lasthoverover);
+					//buttons.add(new Button(x, y, x, y, new Image, null));
 				}
 				
 			}
@@ -130,7 +138,7 @@ public class GalleryGUI extends Screen {
 	{
 		if(pKeyCode == 256)
 		{
-			editmode = false;
+			//editmode = false;
 		}
 		return super.keyPressed(pKeyCode, pScanCode, pModifiers);
 	}
@@ -139,6 +147,7 @@ public class GalleryGUI extends Screen {
 	{
 		if(editmode)
 		{
+			editmode = false;
 			return false;
 		}
 		return true;
@@ -160,8 +169,7 @@ public class GalleryGUI extends Screen {
 		leftover = width % screenshotxsize;
 		margin = (int) Math.floor(leftover / (perrow + 1));
 		files = screenshootdir.listFiles(ff);
-		System.out.println(files.length);
-		
+		//System.out.println(files.length);
 		updateimgs();
 
 	}
@@ -198,7 +206,7 @@ public class GalleryGUI extends Screen {
 		if (renderd.size() == 0) 
 		{
 			int tol = Math.min(files.length, torender.size());
-			System.out.println(torender.size()+ " " +files.length);
+			//System.out.println(torender.size()+ " " +files.length);
 			for (int i = 0; i < tol; i++) 
 			{
 				if(notdis.contains(torender.get(i)))
@@ -209,17 +217,17 @@ public class GalleryGUI extends Screen {
 				dym.add(loadimgresized(files[torender.get(i)]));
 			}
 			renderd = new ArrayList<Integer>(torender);
-			System.out.println("initial");
+			//System.out.println("initial");
 			return;
 		}
 		if (torender.get(0) == renderd.get(0)) {
-			System.out.println("same");
+			//System.out.println("same");
 			return;
 		}
 		if (torender.get(0) == renderd.get(0 + perrow)) {
 			for (int i = 0; i < perrow; i++) {
 				dym.remove(i);
-				System.out.println("removal "+ renderd.get(i));
+				//System.out.println("removal "+ renderd.get(i));
 			}
 			for (int i = 0; i < perrow; i++) 
 			{

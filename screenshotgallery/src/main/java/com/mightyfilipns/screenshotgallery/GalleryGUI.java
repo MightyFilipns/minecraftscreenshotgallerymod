@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,6 +25,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.NativeImage.PixelFormat;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.client.gui.widget.Slider;
@@ -49,10 +52,10 @@ public class GalleryGUI extends Screen {
 	int lasthoverover = -1;
 	boolean editmode = false;
 	DynamicTexture chosen = null;
-	Button filexp = new Button(this.width / 2 - 100, this.height-20, 200, 20, new StringTextComponent("Open in file explorer"), (a) -> {
-        System.out.println("button");
-     });
+	Button filexp = null;
 	Button details = null;
+	boolean detailsopen = false;
+	BasicFileAttributes attr = null;
 	public void stop()
 	{
 		int aa = 0;
@@ -83,18 +86,22 @@ public class GalleryGUI extends Screen {
 		{
 			editmode = true;
 			chosen = loadimg(files[lasthoverover]);	
-			this.addButton(new Button(this.width / 2-150, this.height-20, 150, 20, new StringTextComponent("Open in file explorer"), (a) -> 
-			{
-				//check lasthoverover
+			filexp = new Button(this.width / 2 - 150, this.height-20, 150, 20, new StringTextComponent("Open in default image viewer"), (a) -> {
 				Util.getPlatform().openFile(files[lasthoverover]);
-				System.out.println("file");
-		        System.out.println("button");
-		     }));
+		     });
+			this.addButton(filexp);
 			details = new Button(this.width / 2, this.height-20, 150, 20, new StringTextComponent("More details"), (a) -> 
 			{
-		        System.out.println("details");
+				detailsopen = true;
 		     });
 			this.addButton(details);
+			try {
+				attr = Files.readAttributes(files[lasthoverover].toPath(), BasicFileAttributes.class);
+				
+			} catch (IOException e) {
+				details.setMessage(new StringTextComponent("Error:" + e.getMessage()));
+				e.printStackTrace();
+			}
 		}
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
@@ -112,11 +119,18 @@ public class GalleryGUI extends Screen {
 			int m2 = 30;
 			chosen.bind();
 			blit(pMatrixStack,m2,m2,width-(2*m2),height-(2*m2),0 , 0, 1, 1, 1, 1);
+			if(attr != null && detailsopen)
+			{
+				 fill(pMatrixStack, width/5*2, height/3, width/5*3, height/3*2,this.minecraft.options.getBackgroundColor(0.9f));
+			}
 		}
 		
 		calcscroll();
 		pos2 = renderd.get(0)/perrow;
-		lasthoverover = -1;
+		if(!editmode)
+		{
+			lasthoverover = -1;			
+		}
 		for (DynamicTexture item : dym) 
 		{
 			if(editmode)
@@ -160,8 +174,17 @@ public class GalleryGUI extends Screen {
 	@Override
 	public boolean shouldCloseOnEsc() 
 	{
+		if(detailsopen)
+		{
+			detailsopen = false;
+			return false;
+		}
 		if(editmode)
 		{
+			buttons.remove(details);
+			children.remove(details);
+			buttons.remove(filexp);
+			children.remove(filexp);
 			editmode = false;
 			return false;
 		}

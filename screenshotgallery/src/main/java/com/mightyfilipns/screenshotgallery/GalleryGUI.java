@@ -1,5 +1,6 @@
  package com.mightyfilipns.screenshotgallery;
 
+import java.awt.Desktop;
 import java.awt.Point;
 import java.awt.geom.Arc2D.Double;
 import java.io.Console;
@@ -21,6 +22,7 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.NativeImage.PixelFormat;
+import net.minecraft.util.Util;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.client.gui.widget.Slider;
@@ -47,6 +49,10 @@ public class GalleryGUI extends Screen {
 	int lasthoverover = -1;
 	boolean editmode = false;
 	DynamicTexture chosen = null;
+	Button filexp = new Button(this.width / 2 - 100, this.height-20, 200, 20, new StringTextComponent("Open in file explorer"), (a) -> {
+        System.out.println("button");
+     });
+	Button details = null;
 	public void stop()
 	{
 		int aa = 0;
@@ -73,12 +79,23 @@ public class GalleryGUI extends Screen {
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
-		if(lasthoverover > -1)
+		if(lasthoverover > -1 && !editmode)
 		{
 			editmode = true;
 			chosen = loadimg(files[lasthoverover]);	
+			this.addButton(new Button(this.width / 2-150, this.height-20, 150, 20, new StringTextComponent("Open in file explorer"), (a) -> 
+			{
+				//check lasthoverover
+				Util.getPlatform().openFile(files[lasthoverover]);
+				System.out.println("file");
+		        System.out.println("button");
+		     }));
+			details = new Button(this.width / 2, this.height-20, 150, 20, new StringTextComponent("More details"), (a) -> 
+			{
+		        System.out.println("details");
+		     });
+			this.addButton(details);
 		}
-		// TODO open an edit menu
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	
@@ -112,7 +129,6 @@ public class GalleryGUI extends Screen {
 			}
 			if(item != null)
 			{
-				
 				int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize));
 				int y = (margin * (pos2 + 1) + (112 * pos2) - scroll);
 				item.bind();
@@ -125,9 +141,8 @@ public class GalleryGUI extends Screen {
 					blit(pMatrixStack,x+screenshotxsize-hoverborder,y,hoverborder,112,0 , 0, 1, 1, 1, 1);
 					blit(pMatrixStack,x,y+112-hoverborder,screenshotxsize,hoverborder,0 , 0, 1, 1, 1, 1);
 					lasthoverover = pos2*perrow+pos1;
-					//buttons.add(new Button(x, y, x, y, new Image, null));
+
 				}
-				
 			}
 			pos1++;
 		}

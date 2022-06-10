@@ -13,12 +13,18 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ToggleWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -52,10 +58,18 @@ public class GalleryGUI extends Screen {
 	int lasthoverover = -1;
 	boolean editmode = false;
 	DynamicTexture chosen = null;
+	
 	Button filexp = null;
 	Button details = null;
+	Button aspectratiob = null;
+	
+	boolean respectaspectration = false;
 	boolean detailsopen = false;
 	BasicFileAttributes attr = null;
+	List<String> disdata = new ArrayList<String>();
+	final int charcoeff = 5;
+	int dw = 0;
+	int dh = 100;
 	public void stop()
 	{
 		int aa = 0;
@@ -86,22 +100,38 @@ public class GalleryGUI extends Screen {
 		{
 			editmode = true;
 			chosen = loadimg(files[lasthoverover]);	
-			filexp = new Button(this.width / 2 - 150, this.height-20, 150, 20, new StringTextComponent("Open in default image viewer"), (a) -> {
+			filexp = new Button(this.width / 2 - 150-75, this.height-20, 150, 20, new StringTextComponent("Open in default image viewer"), (a) -> {
 				Util.getPlatform().openFile(files[lasthoverover]);
 		     });
 			this.addButton(filexp);
-			details = new Button(this.width / 2, this.height-20, 150, 20, new StringTextComponent("More details"), (a) -> 
+			details = new Button(this.width / 2-75, this.height-20, 150, 20, new StringTextComponent("More details"), (a) -> 
 			{
 				detailsopen = true;
 		     });
 			this.addButton(details);
+			aspectratiob = new Button(this.width / 2+75, this.height-20, 150, 20, new StringTextComponent("Respect Aspect ratio: " + (respectaspectration ? "ON" : "OFF")), (a) -> 
+			{
+				respectaspectration = !respectaspectration;
+				aspectratiob.setMessage(new StringTextComponent("Respect Aspect ratio: " + (respectaspectration ? "ON" : "OFF")));
+		     });
+			this.addButton(aspectratiob);
 			try {
 				attr = Files.readAttributes(files[lasthoverover].toPath(), BasicFileAttributes.class);
+				disdata.removeAll(disdata);
+				disdata.add("Created: " + attr.creationTime().toString());
+				disdata.add("File Name: " + files[lasthoverover].getName());
+				disdata.add("Width:" + chosen.getPixels().getWidth());
+				disdata.add("Height: "+ chosen.getPixels().getHeight());
+				for (int i = 0; i < disdata.size(); i++) 
+				{
+					dw = Math.max(charcoeff*disdata.get(i).length(), dw);
+				}
 				
 			} catch (IOException e) {
 				details.setMessage(new StringTextComponent("Error:" + e.getMessage()));
 				e.printStackTrace();
 			}
+			
 		}
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
@@ -121,7 +151,22 @@ public class GalleryGUI extends Screen {
 			blit(pMatrixStack,m2,m2,width-(2*m2),height-(2*m2),0 , 0, 1, 1, 1, 1);
 			if(attr != null && detailsopen)
 			{
-				 fill(pMatrixStack, width/5*2, height/3, width/5*3, height/3*2,this.minecraft.options.getBackgroundColor(0.9f));
+				int x1 = width/2-dw/2;
+				int y1 = height/2-dh/2;
+				int x2 = width/2+dw/2;
+				int y2 = height/2+dh/2;
+				int bordercolor = this.minecraft.options.getBackgroundColor(1f);
+				fill(pMatrixStack, x1-10, y1-10, x1, y2+10,bordercolor);
+				fill(pMatrixStack, x1, y1, x2, y1-10,bordercolor);
+				fill(pMatrixStack, x2, y1-10, x2+10, y2+10,bordercolor);
+				fill(pMatrixStack, x1, y2, x2, y2+10,bordercolor);
+				
+				fill(pMatrixStack, x1, y1, x2, y2,this.minecraft.options.getBackgroundColor(0.7f));
+				
+				for (int i = 0; i < disdata.size(); i++) 
+				{
+					drawString(pMatrixStack, this.font, disdata.get(i), x1, y1+(i*10), 0xff_ff_ff_ff);
+				}
 			}
 		}
 		
@@ -182,9 +227,11 @@ public class GalleryGUI extends Screen {
 		if(editmode)
 		{
 			buttons.remove(details);
-			children.remove(details);
+			//children.remove(details);
 			buttons.remove(filexp);
-			children.remove(filexp);
+			//children.remove(filexp);
+			buttons.remove(aspectratiob);
+			//children.remove(aspectratio);
 			editmode = false;
 			return false;
 		}
@@ -207,7 +254,36 @@ public class GalleryGUI extends Screen {
 		leftover = width % screenshotxsize;
 		margin = (int) Math.floor(leftover / (perrow + 1));
 		files = screenshootdir.listFiles(ff);
-		//System.out.println(files.length);
+		List<File> tf = Arrays.asList(files);
+		tf.sort(new Comparator<File>() 
+		{
+
+			@Override
+			public int compare(File o1, File o2) 
+			{
+				try 
+				{
+					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
+					BasicFileAttributes bf2 = Files.readAttributes(o2.toPath(), BasicFileAttributes.class);
+					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) > bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					{
+						return 1;
+					}
+					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) < bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					{
+						return -1;
+					}
+					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) == bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					{
+						return 0;
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return 0;
+			}
+		});
+		files = tf.toArray(new File[0]);
 		updateimgs();
 
 	}
@@ -217,6 +293,18 @@ public class GalleryGUI extends Screen {
 		renderd.removeAll(renderd);
 		scroll = 0;
 		super.resize(pMinecraft, pWidth, pHeight);
+		if(editmode)
+		{
+			aspectratiob.x = this.width / 2+75;
+			filexp.x = this.width / 2 - 150-75;
+			details.x = this.width / 2-75;
+			aspectratiob.y =this.height-20;
+			filexp.y =this.height-20;
+			details.y =this.height-20;
+			this.addButton(aspectratiob);
+			this.addButton(filexp);
+			this.addButton(details);
+		}
 	}
 	private void updateimgs() {
 		torender.removeAll(torender);

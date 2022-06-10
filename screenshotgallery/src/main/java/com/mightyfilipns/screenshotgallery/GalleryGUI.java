@@ -147,8 +147,36 @@ public class GalleryGUI extends Screen {
 		if(editmode)
 		{
 			int m2 = 30;
+			
+			int imgw = width-(2*m2);
+			int imgh = height-(2*m2);
+			
+			int chosenh = chosen.getPixels().getHeight();
+			int chosenw = chosen.getPixels().getWidth();
+			
+			float ratio = (float)chosenw/(float)chosenh;
+			if(respectaspectration)
+			{				
+				if(chosenw < chosenh)
+				{
+					int newh = (int) ((float)chosenw/ratio);
+					imgw = chosenw;
+					imgh = newh;
+				}
+				if(chosenw > chosenh)
+				{
+					int neww = (int) ((float)chosenh*ratio);
+					imgh = chosenh;
+					imgw = neww;
+				}
+				if(chosenw == chosenh)
+				{
+					imgh = chosenw;
+					imgw = imgh;
+				}
+			}
 			chosen.bind();
-			blit(pMatrixStack,m2,m2,width-(2*m2),height-(2*m2),0 , 0, 1, 1, 1, 1);
+			blit(pMatrixStack,m2,m2,imgw,imgh,0 , 0, 1, 1, 1, 1);
 			if(attr != null && detailsopen)
 			{
 				int x1 = width/2-dw/2;

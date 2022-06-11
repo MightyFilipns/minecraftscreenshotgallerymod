@@ -147,9 +147,12 @@ public class GalleryGUI extends Screen {
 		if(editmode)
 		{
 			int m2 = 30;
+			int m3 = m2;
 			
 			int imgw = width-(2*m2);
-			int imgh = height-(2*m2);
+			int imgh = height-(2*m3);
+			
+			int min = Math.min(imgw, imgh);
 			
 			int chosenh = chosen.getPixels().getHeight();
 			int chosenw = chosen.getPixels().getWidth();
@@ -159,24 +162,34 @@ public class GalleryGUI extends Screen {
 			{				
 				if(chosenw < chosenh)
 				{
-					int newh = (int) ((float)chosenw/ratio);
-					imgw = chosenw;
-					imgh = newh;
+					imgw = (int) (imgh*ratio);
+					if(imgw > width-m2*2)
+					{
+						imgw = width-m2*2;
+						imgh = (int) (imgw/ratio);
+					}
 				}
 				if(chosenw > chosenh)
 				{
-					int neww = (int) ((float)chosenh*ratio);
-					imgh = chosenh;
-					imgw = neww;
+					imgh = (int) (imgw/ratio);
+					if(imgh > height-m2*2)
+					{
+						imgh = height-m2*2;
+						imgw = (int) (imgh*ratio);
+					}
 				}
 				if(chosenw == chosenh)
 				{
-					imgh = chosenw;
-					imgw = imgh;
+					imgh = min;
+					imgw = min;
 				}
+				m2 = width/2-imgw/2;
+				m3 = height/2-imgh/2;
 			}
+			
+			
 			chosen.bind();
-			blit(pMatrixStack,m2,m2,imgw,imgh,0 , 0, 1, 1, 1, 1);
+			blit(pMatrixStack,m2,m3,imgw,imgh, 0, 0,1,1,1,1);
 			if(attr != null && detailsopen)
 			{
 				int x1 = width/2-dw/2;

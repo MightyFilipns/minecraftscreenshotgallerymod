@@ -1,9 +1,5 @@
  package com.mightyfilipns.screenshotgallery;
 
-import java.awt.Desktop;
-import java.awt.Point;
-import java.awt.geom.Arc2D.Double;
-import java.io.Console;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -14,27 +10,20 @@ import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ToggleWidget;
-import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.NativeImage.PixelFormat;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.fml.client.gui.widget.Slider;
 
 public class GalleryGUI extends Screen {
 	private static final Minecraft INSTANCE = Minecraft.getInstance();
@@ -44,8 +33,10 @@ public class GalleryGUI extends Screen {
 	List<Integer> renderd = new ArrayList<Integer>();
 	List<Integer> notdis = new ArrayList<Integer>();
 	final static int screenshotxsize = 200;
+	final static int screenshotysize = 112;
 	File[] files;
 	File screenshootdir = new File(INSTANCE.gameDirectory.getAbsolutePath(), "/screenshots/");
+	ResourceLocation sliders = new ResourceLocation("textures/gui/container/creative_inventory/tabs.png");
 	FileFilter ff = file -> !file.isDirectory() && file.getName().endsWith(".png");
 	int scroll = 0;
 	int perrow = 0;
@@ -54,7 +45,7 @@ public class GalleryGUI extends Screen {
 	int scrollmaxvalue;
 	int maxheight;
 	static GalleryGUI ins = null;
-	static int hoverborder = 10; 
+	int hoverborder = 5; 
 	int lasthoverover = -1;
 	boolean editmode = false;
 	DynamicTexture chosen = null;
@@ -63,7 +54,7 @@ public class GalleryGUI extends Screen {
 	Button details = null;
 	Button aspectratiob = null;
 	
-	boolean respectaspectration = false;
+	boolean respectaspectration = true;
 	boolean detailsopen = false;
 	BasicFileAttributes attr = null;
 	List<String> disdata = new ArrayList<String>();
@@ -81,7 +72,7 @@ public class GalleryGUI extends Screen {
 	
 	private void calcscroll()
 	{
-		maxheight = (int) ((margin + 122) * Math.ceil(((float)files.length / (float)perrow)));
+		maxheight = (int) ((margin + screenshotysize) * Math.ceil(((float)files.length / (float)perrow)));
 		scrollmaxvalue = Math.max(maxheight - height, 0);
 		scroll = Math.max(Math.min(scroll, scrollmaxvalue), 0);
 	}
@@ -100,21 +91,15 @@ public class GalleryGUI extends Screen {
 		{
 			editmode = true;
 			chosen = loadimg(files[lasthoverover]);	
-			filexp = new Button(this.width / 2 - 150-75, this.height-20, 150, 20, new StringTextComponent("Open in default image viewer"), (a) -> {
+			filexp = new Button(this.width / 2 - 150, this.height-20, 150, 20, new StringTextComponent("Open in default image viewer"), (a) -> {
 				Util.getPlatform().openFile(files[lasthoverover]);
 		     });
 			this.addButton(filexp);
-			details = new Button(this.width / 2-75, this.height-20, 150, 20, new StringTextComponent("More details"), (a) -> 
+			details = new Button(this.width / 2, this.height-20, 150, 20, new StringTextComponent("More details"), (a) -> 
 			{
 				detailsopen = true;
 		     });
 			this.addButton(details);
-			aspectratiob = new Button(this.width / 2+75, this.height-20, 150, 20, new StringTextComponent("Respect Aspect ratio: " + (respectaspectration ? "ON" : "OFF")), (a) -> 
-			{
-				respectaspectration = !respectaspectration;
-				aspectratiob.setMessage(new StringTextComponent("Respect Aspect ratio: " + (respectaspectration ? "ON" : "OFF")));
-		     });
-			this.addButton(aspectratiob);
 			try {
 				attr = Files.readAttributes(files[lasthoverover].toPath(), BasicFileAttributes.class);
 				disdata.removeAll(disdata);
@@ -137,13 +122,18 @@ public class GalleryGUI extends Screen {
 	}
 	
 	@Override
-	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks) {
+	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks) 
+	{
 		perrow = Math.max(1, Math.floorDiv(width, screenshotxsize));
 		leftover = width % screenshotxsize;
 		margin = (int) Math.floor(leftover / (perrow + 1));
 		this.renderBackground(pMatrixStack);
 		int pos1 = 0;
 		int pos2 = 0;
+		if(files == null && files.length == 0)
+		{
+			drawCenteredString(pMatrixStack, this.font, new StringTextComponent("No Screenshots found"), width/2, height/2, 0xff_ff_ff_ff);
+		}
 		if(editmode)
 		{
 			int m2 = 30;
@@ -229,33 +219,67 @@ public class GalleryGUI extends Screen {
 			}
 			if(item != null)
 			{
-				int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize));
-				int y = (margin * (pos2 + 1) + (112 * pos2) - scroll);
+				final float ratio = screenshotxsize/(float)(screenshotysize);
+				
+				int imgh =screenshotysize;
+				int imgw = screenshotxsize;
+				
+				NativeImage chosen = item.getPixels();
+				
+				int chosenw = chosen.getWidth();
+				int chosenh = chosen.getHeight();
+				
+				int min = Math.min(imgw, imgh);
+				
+				if(chosenw < chosenh)
+				{
+					imgw = (int) (imgh/ratio);
+					if(imgw > screenshotxsize)
+					{
+						imgw = screenshotxsize;
+						imgh = (int) (imgw*ratio);
+					}
+				}
+				if(chosenw > chosenh)
+				{
+					imgh = (int) (imgw/ratio);
+					if(imgh > 112)
+					{
+						imgh = 112;
+						imgw = (int) (imgh*ratio);
+					}
+				}
+				if(chosenw == chosenh)
+				{
+					imgh = min;
+					imgw = min;
+				}
+				
+				int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize))+Math.max(0, screenshotxsize-imgw)/2;
+				int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll);
 				item.bind();
-				blit(pMatrixStack,x,y,screenshotxsize, 112, 0, 0, 1, 1, 1, 1);
-				if(iswithin(pMouseY, y, y+112) && iswithin(pMouseX, x, x+screenshotxsize))
+				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
+				if(iswithin(pMouseY, y, y+imgh) && iswithin(pMouseX, x, x+imgw))
 				{
 					whiteimg.bind();
-					blit(pMatrixStack,x,y,hoverborder,112,0 , 0, 1, 1, 1, 1);
-					blit(pMatrixStack,x,y,screenshotxsize,hoverborder,0 , 0, 1, 1, 1, 1);
-					blit(pMatrixStack,x+screenshotxsize-hoverborder,y,hoverborder,112,0 , 0, 1, 1, 1, 1);
-					blit(pMatrixStack,x,y+112-hoverborder,screenshotxsize,hoverborder,0 , 0, 1, 1, 1, 1);
+					blit(pMatrixStack,x,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
+					blit(pMatrixStack,x,y,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
+					blit(pMatrixStack,x+imgw-hoverborder,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
+					blit(pMatrixStack,x,y+imgh-hoverborder,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
 					lasthoverover = pos2*perrow+pos1;
-
 				}
 			}
 			pos1++;
 		}
-		super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
-	}
-	@Override
-	public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) 
-	{
-		if(pKeyCode == 256)
+		if(scrollmaxvalue > 0 && !editmode)
 		{
-			//editmode = false;
+			this.minecraft.getTextureManager().bind(sliders);
+			int x = width-12;
+			float scrollp = (float)scroll/((float)scrollmaxvalue-25);
+			int y = (int) (scrollp*(height-25));
+			blit(pMatrixStack,x,y,232,0,12,15);
 		}
-		return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+		super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
 	}
 	@Override
 	public boolean shouldCloseOnEsc() 
@@ -268,11 +292,7 @@ public class GalleryGUI extends Screen {
 		if(editmode)
 		{
 			buttons.remove(details);
-			//children.remove(details);
 			buttons.remove(filexp);
-			//children.remove(filexp);
-			buttons.remove(aspectratiob);
-			//children.remove(aspectratio);
 			editmode = false;
 			return false;
 		}
@@ -336,13 +356,10 @@ public class GalleryGUI extends Screen {
 		super.resize(pMinecraft, pWidth, pHeight);
 		if(editmode)
 		{
-			aspectratiob.x = this.width / 2+75;
-			filexp.x = this.width / 2 - 150-75;
-			details.x = this.width / 2-75;
-			aspectratiob.y =this.height-20;
+			filexp.x = this.width / 2-150;
+			details.x = this.width / 2;
 			filexp.y =this.height-20;
 			details.y =this.height-20;
-			this.addButton(aspectratiob);
 			this.addButton(filexp);
 			this.addButton(details);
 		}
@@ -350,7 +367,7 @@ public class GalleryGUI extends Screen {
 	private void updateimgs() {
 		torender.removeAll(torender);
 		notdis.removeAll(notdis);
-		int a = 112 + margin;
+		int a = screenshotysize + margin;
 		int v1 = (int) Math.ceil((double) height / (double) a);
 		int visible = (int) v1 * perrow;
 		int scrolleff = (int) Math.floor(scroll / a);
@@ -458,7 +475,15 @@ public class GalleryGUI extends Screen {
 		NativeImage nativeimage = null;
 		try (InputStream inputstream = new FileInputStream(img.getAbsoluteFile())) {
 			nativeimage = NativeImage.read(inputstream);
-			nativeimage = resize(screenshotxsize, 112, nativeimage);
+			int x = width/perrow;
+			int y = x;
+			if((float)nativeimage.getWidth()/(float)nativeimage.getHeight() != 0)
+			{
+				y /= (float)nativeimage.getWidth()/(float)nativeimage.getHeight(); 				
+			}
+			
+			
+			nativeimage = resize(x, y, nativeimage);
 			return new DynamicTexture(nativeimage);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

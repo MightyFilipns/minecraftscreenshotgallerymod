@@ -28,7 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
-@Mod("screenshotgallery")
+@Mod(GalleryGUIMain.modid)
 public class GalleryGUIMain
 {
     private static final Minecraft INSTANCE = Minecraft.getInstance();

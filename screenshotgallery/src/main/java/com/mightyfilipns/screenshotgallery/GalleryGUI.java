@@ -62,6 +62,12 @@ public class GalleryGUI extends Screen {
 	final int charcoeff = 5;
 	int dw = 0;
 	int dh = 100;
+	enum sortdir
+	{
+		Ascending,
+		Descending
+	}
+	
 	
 	public void stop()
 	{
@@ -70,6 +76,13 @@ public class GalleryGUI extends Screen {
 	protected GalleryGUI() {
 		super(new StringTextComponent("Gallery Gui"));
 		ins = this;
+		try {
+			this.addButton(new Dropbox<sortdir>(100, 100, 50, 200, sortdir.class, sortdir.Descending, buttons));
+			buttons.forEach((a)-> {System.out.println(a.getMessage().getString());});
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void calcscroll()
@@ -80,9 +93,12 @@ public class GalleryGUI extends Screen {
 	}
 	@Override
 	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
-		scroll -= pDelta * 10;
-		calcscroll();
-		updateimgs();
+		if(!editmode) 
+		{
+			scroll -= pDelta * 10;
+			calcscroll();
+			updateimgs();			
+		}
 		return super.mouseScrolled(pMouseX, pMouseY, pDelta);
 	}
 	boolean notfirsts = false;
@@ -120,8 +136,7 @@ public class GalleryGUI extends Screen {
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
-
-		if(lasthoverover > -1 && !editmode)
+		if(lasthoverover > -1 && !editmode && files[lasthoverover] != null)
 		{
 			editmode = true;
 			chosen = loadimg(files[lasthoverover]);	
@@ -242,8 +257,8 @@ public class GalleryGUI extends Screen {
 		}
 		else
 		{
-			super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
-			return; 
+			updateimgs();
+			pos2 = renderd.get(0)/perrow;
 		}
 		if(!editmode)
 		{
@@ -301,6 +316,7 @@ public class GalleryGUI extends Screen {
 				int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll);
 				item.bind();
 				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
+				//System.out.println("blit " + imgw+" " + imgh+" "+x+" "+y);
 				if(iswithin(pMouseY, y, y+imgh) && iswithin(pMouseX, x, x+imgw))
 				{
 					whiteimg.bind();
@@ -309,6 +325,15 @@ public class GalleryGUI extends Screen {
 					blit(pMatrixStack,x+imgw-hoverborder,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
 					blit(pMatrixStack,x,y+imgh-hoverborder,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
 					lasthoverover = pos2*perrow+pos1;
+				}
+			}
+			else
+			{
+				if(pos2*perrow+pos1 <= files.length-1)
+				{
+					int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize));
+					int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll);
+					drawString(pMatrixStack, this.font, "Error Encountered" , x, y, 0xFF_FF_FF_FF);					
 				}
 			}
 			pos1++;
@@ -388,6 +413,12 @@ public class GalleryGUI extends Screen {
 		});
 		files = tf.toArray(new File[0]);
 		updateimgs();
+		try {
+			this.addButton(new Dropbox<sortdir>(120, 100, 120, 20, sortdir.class, sortdir.Descending, buttons));
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 	@Override
@@ -396,6 +427,12 @@ public class GalleryGUI extends Screen {
 		renderd.removeAll(renderd);
 		scroll = 0;
 		super.resize(pMinecraft, pWidth, pHeight);
+		try {
+			this.addButton(new Dropbox<sortdir>(100, 100, 50, 200, sortdir.class, sortdir.Descending, buttons));
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if(editmode)
 		{
 			filexp.x = this.width / 2-150;
@@ -407,6 +444,7 @@ public class GalleryGUI extends Screen {
 		}
 	}
 	private void updateimgs() {
+		//System.out.println("called");
 		torender.removeAll(torender);
 		notdis.removeAll(notdis);
 		int a = screenshotysize + margin;
@@ -452,7 +490,8 @@ public class GalleryGUI extends Screen {
 				//System.out.println("same");
 				return;
 			}
-			if (torender.get(0) == renderd.get(0 + perrow)) {
+			//== can't be used because java
+			if (torender.get(0).equals(renderd.get(0 + perrow))) {
 				for (int i = 0; i < perrow; i++) {
 					dym.remove(i);
 					//System.out.println("removal "+ renderd.get(i));
@@ -474,9 +513,10 @@ public class GalleryGUI extends Screen {
 				renderd = new ArrayList<Integer>(torender);
 				//System.out.println("scroll down");
 				// scroll down
+				return;
 			}
 			//fix
-			if (torender.get(0 + perrow) == renderd.get(0))
+			if (torender.get(0 + perrow).equals(renderd.get(0)))
 			{
 				if(getlast(renderd) != getlast(torender))
 				{
@@ -511,7 +551,9 @@ public class GalleryGUI extends Screen {
 				renderd = new ArrayList<Integer>(torender);
 				//System.out.println("scroll up");
 				// scroll up
+				return;
 			}
+			//System.out.println("no ifs fulfilled "+ torender.get(0)+" "+renderd.get(0 + perrow) +" : "+ torender.get(0).equals(renderd.get(0 + perrow)));
 		}
 		catch (IndexOutOfBoundsException e) 
 		{
@@ -526,8 +568,10 @@ public class GalleryGUI extends Screen {
 
 	public DynamicTexture loadimgresized(File img) {
 		NativeImage nativeimage = null;
+		//long start = System.currentTimeMillis();
 		try (InputStream inputstream = new FileInputStream(img.getAbsoluteFile())) {
 			nativeimage = NativeImage.read(inputstream);
+			//System.out.println(System.currentTimeMillis()-start+" load");
 			int x = width/perrow;
 			int y = x;
 			if((float)nativeimage.getWidth()/(float)nativeimage.getHeight() != 0)
@@ -537,6 +581,7 @@ public class GalleryGUI extends Screen {
 			
 			
 			nativeimage = resize(x, y, nativeimage);
+			//System.out.println(System.currentTimeMillis()-start+" full");
 			return new DynamicTexture(nativeimage);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

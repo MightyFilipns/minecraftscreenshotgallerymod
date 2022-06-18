@@ -1,5 +1,6 @@
  package com.mightyfilipns.screenshotgallery;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -61,6 +62,7 @@ public class GalleryGUI extends Screen {
 	final int charcoeff = 5;
 	int dw = 0;
 	int dh = 100;
+	
 	public void stop()
 	{
 		int aa = 0;
@@ -83,10 +85,42 @@ public class GalleryGUI extends Screen {
 		updateimgs();
 		return super.mouseScrolled(pMouseX, pMouseY, pDelta);
 	}
+	boolean notfirsts = false;
+	@Override
+	public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) 
+	{
+		notfirsts = false;
+		if(!editmode)
+		{
+			dym.removeAll(dym);
+			renderd.removeAll(renderd);			
+		}
+		calcscroll();
+		updateimgs();
+		return super.mouseReleased(pMouseX, pMouseY, pButton);
+	}
+	@Override
+	public boolean mouseDragged(double pMouseX, double pMouseY, int pButton, double pDragX, double pDragY) 
+	{
+		if(pMouseX < 0 || pMouseY <0 || pMouseX > width || pDragY > height)
+		{
+			return false;
+		}
+		float scrollp = (float)scroll/((float)scrollmaxvalue);
+		int y = (int) (scrollp*(height-15));
+		if(pMouseX > width-15 || notfirsts && !editmode && pMouseY+50 > y && y > pMouseY-30)
+		{
+			notfirsts = true;
+			scroll = (int) (scrollmaxvalue*(pMouseY/(float)height));
+			updateimgs();
+		}
+		return super.mouseDragged(pMouseX, pMouseY, pButton, pDragX, pDragY);
+	}
 	
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
+
 		if(lasthoverover > -1 && !editmode)
 		{
 			editmode = true;
@@ -105,7 +139,7 @@ public class GalleryGUI extends Screen {
 				disdata.removeAll(disdata);
 				disdata.add("Created: " + attr.creationTime().toString());
 				disdata.add("File Name: " + files[lasthoverover].getName());
-				disdata.add("Width:" + chosen.getPixels().getWidth());
+				disdata.add("Width: " + chosen.getPixels().getWidth());
 				disdata.add("Height: "+ chosen.getPixels().getHeight());
 				for (int i = 0; i < disdata.size(); i++) 
 				{
@@ -113,7 +147,7 @@ public class GalleryGUI extends Screen {
 				}
 				
 			} catch (IOException e) {
-				details.setMessage(new StringTextComponent("Error:" + e.getMessage()));
+				details.setMessage(new StringTextComponent("Error: " + e.getMessage()));
 				e.printStackTrace();
 			}
 			
@@ -202,7 +236,15 @@ public class GalleryGUI extends Screen {
 		}
 		
 		calcscroll();
-		pos2 = renderd.get(0)/perrow;
+		if(renderd.size() != 0)
+		{
+			pos2 = renderd.get(0)/perrow;			
+		}
+		else
+		{
+			super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
+			return; 
+		}
 		if(!editmode)
 		{
 			lasthoverover = -1;			
@@ -275,8 +317,8 @@ public class GalleryGUI extends Screen {
 		{
 			this.minecraft.getTextureManager().bind(sliders);
 			int x = width-12;
-			float scrollp = (float)scroll/((float)scrollmaxvalue-25);
-			int y = (int) (scrollp*(height-25));
+			float scrollp = (float)scroll/((float)scrollmaxvalue);
+			int y = (int) (scrollp*(height-15));
 			blit(pMatrixStack,x,y,232,0,12,15);
 		}
 		super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
@@ -371,102 +413,113 @@ public class GalleryGUI extends Screen {
 		int v1 = (int) Math.ceil((double) height / (double) a);
 		int visible = (int) v1 * perrow;
 		int scrolleff = (int) Math.floor(scroll / a);
-		//System.out.println((double)scroll/(double)a);
-		if((double)scroll%(double)a <= 10)
-		{
-			visible+=perrow;
-		}
-		for (int i = 0; i < visible; i++) 
-		{
-			if(i+(scrolleff*perrow) >= files.length)
-			{
-				notdis.add(i+(scrolleff*perrow));
-			}
-			torender.add(i + (scrolleff * perrow));
-		}
 		
-		//System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));
-		//System.out.println(torender);
-		if (renderd.size() == 0) 
+		try 
 		{
-			int tol = Math.min(files.length, torender.size());
-			//System.out.println(torender.size()+ " " +files.length);
-			for (int i = 0; i < tol; i++) 
+			if((double)scroll%(double)a <= 10)
 			{
-				if(notdis.contains(torender.get(i)))
+				visible+=perrow;
+			}
+			for (int i = 0; i < visible; i++) 
+			{
+				if(i+(scrolleff*perrow) >= files.length)
 				{
-					dym.add(null);
-					continue;
+					notdis.add(i+(scrolleff*perrow));
 				}
-				dym.add(loadimgresized(files[torender.get(i)]));
+				torender.add(i + (scrolleff * perrow));
 			}
-			renderd = new ArrayList<Integer>(torender);
-			//System.out.println("initial");
-			return;
-		}
-		if (torender.get(0) == renderd.get(0)) {
-			//System.out.println("same");
-			return;
-		}
-		if (torender.get(0) == renderd.get(0 + perrow)) {
-			for (int i = 0; i < perrow; i++) {
-				dym.remove(i);
-				//System.out.println("removal "+ renderd.get(i));
-			}
-			for (int i = 0; i < perrow; i++) 
+			
+			//System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));
+			//System.out.println(torender);
+			if (renderd.size() == 0) 
 			{
-				int fi = Math.abs(i-perrow);
-				if(notdis.contains(torender.get(torender.size() - fi)))
+				int tol = Math.min(files.length, torender.size());
+				//System.out.println(torender.size()+ " " +files.length);
+				for (int i = 0; i < tol; i++) 
 				{
-					dym.add(null);
-					continue;
-				}
-				dym.add(loadimgresized(files[torender.get(torender.size() - fi)]));
-			}
-			for (int i = 0; i < perrow; i++) 
-			{
-				dym.set(i, loadimgresized(files[torender.get(i)])); // i couldn't figure out what's wrong with the code above, so i added this to "fix" it 				
-			}
-			renderd = new ArrayList<Integer>(torender);
-			//System.out.println("scroll down");
-			// scroll down
-		}
-		//fix
-		if (torender.get(0 + perrow) == renderd.get(0))
-		{
-			if(getlast(renderd) != getlast(torender))
-			{
-				if(notdis.size() !=0)
-				{
-					//last row special
-					for (int i = 0; i < perrow-notdis.size(); i++) 
+					if(notdis.contains(torender.get(i)))
 					{
-						dym.remove((dym.size() - 1) - i);
+						dym.add(null);
+						continue;
 					}
+					dym.add(loadimgresized(files[torender.get(i)]));
 				}
-				else
+				renderd = new ArrayList<Integer>(torender);
+				//System.out.println("initial");
+				return;
+			}
+			if (torender.get(0) == renderd.get(0)) {
+				//System.out.println("same");
+				return;
+			}
+			if (torender.get(0) == renderd.get(0 + perrow)) {
+				for (int i = 0; i < perrow; i++) {
+					dym.remove(i);
+					//System.out.println("removal "+ renderd.get(i));
+				}
+				for (int i = 0; i < perrow; i++) 
 				{
-					for (int i = 0; i < perrow; i++) 
+					int fi = Math.abs(i-perrow);
+					if(notdis.contains(torender.get(torender.size() - fi)))
 					{
-						dym.remove(dym.size() - 1);
-					}		
-				}		
-			}
-			List<DynamicTexture> ndym = new ArrayList<DynamicTexture>();
-			for (int i = 0; i < perrow; i++) {
-				ndym.add(loadimgresized(files[torender.get(i)]));
-			}
-			dym.addAll(0, ndym);
-			for (int i = 0; i < perrow; i++) 
-			{
-				if(dym.get(dym.size()-i-1) == null)
+						dym.add(null);
+						continue;
+					}
+					dym.add(loadimgresized(files[torender.get(torender.size() - fi)]));
+				}
+				for (int i = 0; i < perrow; i++) 
 				{
-					continue;
-				}			
+					dym.set(i, loadimgresized(files[torender.get(i)])); // i couldn't figure out what's wrong with the code above, so i added this to "fix" it 				
+				}
+				renderd = new ArrayList<Integer>(torender);
+				//System.out.println("scroll down");
+				// scroll down
 			}
-			renderd = new ArrayList<Integer>(torender);
-			//System.out.println("scroll up");
-			// scroll up
+			//fix
+			if (torender.get(0 + perrow) == renderd.get(0))
+			{
+				if(getlast(renderd) != getlast(torender))
+				{
+					if(notdis.size() !=0)
+					{
+						//last row special
+						for (int i = 0; i < perrow-notdis.size(); i++) 
+						{
+							dym.remove((dym.size() - 1) - i);
+						}
+					}
+					else
+					{
+						for (int i = 0; i < perrow; i++) 
+						{
+							dym.remove(dym.size() - 1);
+						}		
+					}		
+				}
+				List<DynamicTexture> ndym = new ArrayList<DynamicTexture>();
+				for (int i = 0; i < perrow; i++) {
+					ndym.add(loadimgresized(files[torender.get(i)]));
+				}
+				dym.addAll(0, ndym);
+				for (int i = 0; i < perrow; i++) 
+				{
+					if(dym.get(dym.size()-i-1) == null)
+					{
+						continue;
+					}			
+				}
+				renderd = new ArrayList<Integer>(torender);
+				//System.out.println("scroll up");
+				// scroll up
+			}
+		}
+		catch (IndexOutOfBoundsException e) 
+		{
+			dym.removeAll(dym);
+			renderd.removeAll(renderd);
+			scroll = 0;
+			calcscroll();
+			e.printStackTrace();
 		}
 
 	}

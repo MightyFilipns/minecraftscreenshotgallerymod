@@ -9,20 +9,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SimpleSound;
+import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.NativeImage.PixelFormat;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.StringTextComponent;
 
@@ -63,6 +72,7 @@ public class GalleryGUI extends Screen {
 	int dw = 0;
 	int dh = 100;
 	Dropbox<sortdir> sortdbox = null;
+	Dropbox<sorttype> sortboxtype = null;
 	boolean notfirsts = false;
 	enum sortdir
 	{
@@ -94,28 +104,87 @@ public class GalleryGUI extends Screen {
 		scroll = Math.max(Math.min(scroll, scrollmaxvalue), 0);
 	}
 	
+	public boolean issortinghovered()
+	{
+		if(sortdbox.isHovered() || sortboxtype.isHovered())
+		{
+			return true;
+		}
+		return false;
+	}
+	private boolean issortingopen()
+	{
+		if(sortdbox.isopen || sortboxtype.isopen)
+		{
+			return true;
+		}
+		return false;
+	}
+	private void togglesortvisibility(boolean newstate)
+	{
+		sortdbox.setvisiblity(newstate);
+		sortboxtype.setvisiblity(newstate);
+	}
 	public void resort()
 	{
 		List<File> tf = Arrays.asList(files);
 		tf.sort(new Comparator<File>() 
 		{
-
+			int postivevalue = -1;
+			int negativevalue = 1;
 			@Override
 			public int compare(File o1, File o2) 
 			{
+				if(sortdbox.getvalue() == sortdir.Ascending)
+				{
+					postivevalue = 1;
+					negativevalue = -1;
+				}
 				try 
 				{
 					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
 					BasicFileAttributes bf2 = Files.readAttributes(o2.toPath(), BasicFileAttributes.class);
-					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) > bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					
+					long v1 = 0;
+					long v2 = 0;
+					sorttype st = (sorttype) sortboxtype.getvalue();
+					switch (st) 
 					{
-						return 1;
+						case filesize:
+							v1 = o1.length();
+							v2 = o2.length();
+							break;
+						case height:
+							v1 = getdim(o1, true);
+							v2 = getdim(o2, true);
+							break;
+						case lastCreatedTime:
+							v1 = bf1.creationTime().to(TimeUnit.SECONDS);
+							v2 = bf2.creationTime().to(TimeUnit.SECONDS);
+							break;
+						case lastModifiedTime:
+							v1 = bf1.lastModifiedTime().to(TimeUnit.SECONDS);
+							v2 =  bf2.lastModifiedTime().to(TimeUnit.SECONDS);
+							break;
+						case width:
+							v1 = getdim(o1, false);
+							v2 = getdim(o2, false);
+							break;
+						default:
+							
+							break;
+						
 					}
-					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) < bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+
+					if(v1 > v2)
 					{
-						return -1;
+						return postivevalue;
 					}
-					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) == bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					if(v1 < v2)
+					{
+						return negativevalue;
+					}
+					if(v1 == v2)
 					{
 						return 0;
 					}
@@ -127,7 +196,32 @@ public class GalleryGUI extends Screen {
 		});
 		files = tf.toArray(new File[0]);
 	}
-	
+	private int getdim(File img,boolean height)
+	{
+		try(ImageInputStream in = ImageIO.createImageInputStream(img)){
+		    final Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
+		    if (readers.hasNext()) {
+		        ImageReader reader = readers.next();
+		        try {
+		            reader.setInput(in);
+		            if(height)
+		            {
+		            	return reader.getHeight(0);
+		            }
+		            else
+		            {
+		            	return reader.getWidth(0);
+		            }
+		        } finally {
+		            reader.dispose();
+		        }
+		    }
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		return 0;
+	}
 	
 	@Override
 	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
@@ -172,7 +266,7 @@ public class GalleryGUI extends Screen {
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
-		if(lasthoverover > -1 && !editmode && files[lasthoverover] != null)
+		if(lasthoverover > -1 && !editmode && files[lasthoverover] != null && !issortingopen())
 		{
 			editmode = true;
 			chosen = loadimg(files[lasthoverover]);	
@@ -202,11 +296,11 @@ public class GalleryGUI extends Screen {
 				details.setMessage(new StringTextComponent("Error: " + e.getMessage()));
 				e.printStackTrace();
 			}
-			
+			togglesortvisibility(false);
 		}
+		StaticFunctions.playDownSound();
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
-	
 	@Override
 	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks) 
 	{
@@ -354,7 +448,7 @@ public class GalleryGUI extends Screen {
 				item.bind();
 				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
 				//System.out.println("blit " + imgw+" " + imgh+" "+x+" "+y);
-				if(iswithin(pMouseY, y, y+imgh) && iswithin(pMouseX, x, x+imgw))
+				if(iswithin(pMouseY, y, y+imgh) && iswithin(pMouseX, x, x+imgw) && !issortingopen())
 				{
 					whiteimg.bind();
 					blit(pMatrixStack,x,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
@@ -398,6 +492,7 @@ public class GalleryGUI extends Screen {
 			buttons.remove(details);
 			buttons.remove(filexp);
 			editmode = false;
+			togglesortvisibility(true);
 			return false;
 		}
 		return true;
@@ -419,12 +514,16 @@ public class GalleryGUI extends Screen {
 		leftover = width % screenshotxsize;
 		margin = (int) Math.floor(leftover / (perrow + 1));
 		files = screenshootdir.listFiles(ff);
-		resort();
-		updateimgs();
 		sortdbox = new Dropbox<sortdir>(width-100, 0, 100, 20, sortdir.Descending, buttons, (a,b) -> {
-			System.out.println("Changed To "+ b.name());
+			resort();
+		});
+		sortboxtype = new Dropbox<sorttype>(width-200, 0, 100, 20, sorttype.lastModifiedTime, buttons, (a,b) -> {
+			resort();
 		});
 		this.addButton(sortdbox);
+		this.addButton(sortboxtype);
+		resort();
+		updateimgs();
 
 	}
 	@Override

@@ -10,6 +10,7 @@ import java.util.function.Function;
 import com.mightyfilipns.screenshotgallery.GalleryGUI.sortdir;
 import com.mojang.blaze3d.matrix.MatrixStack;
 
+import net.java.games.input.Mouse;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.button.Button.IPressable;
@@ -27,7 +28,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	boolean isopen = false;
 	public Dropbox(int pX, int pY, int pWidth, int pHeight,Enum<T> defaultvalue,List<Widget> buttons,BiConsumer<Widget,Enum<T>> _onchange) 
 	{
-		super(pX, pY, pWidth, pHeight, new StringTextComponent("dropbox"));
+		super(pX, pY, pWidth, pHeight, new StringTextComponent(""));
 		current = defaultvalue;
 		objl= Arrays.asList(defaultvalue.getDeclaringClass().getEnumConstants());
 		objl.forEach((a)->{values.add(a.toString());});
@@ -35,6 +36,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 		buttons.add(btn1);
 		btns = buttons;
 		onchange = _onchange;
+		visible = true;
 	}
 	public Enum<T> getvalue()
 	{
@@ -51,6 +53,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 				tempbtns.get(i).onPress();
 				onchange.accept(this,(Enum<T>)current);
 				isopen = false;
+				//StaticFunctions.playDownSound();
 				return super.mouseClicked(pMouseX, pMouseY, pButton);
 			}
 		}
@@ -64,9 +67,20 @@ public class Dropbox<T extends Enum<T>> extends Widget
 		btn1.onPress();
 		super.onClick(pMouseX, pMouseY);
 	}
-	
+	public void setvisiblity(boolean newstate)
+	{
+		btn1.visible = newstate;
+		this.visible = newstate;
+	}
 	public void setupbuttons()
 	{
+		if(isopen)
+		{
+			btns.removeAll(tempbtns);
+			tempbtns.removeAll(tempbtns);
+			isopen= false;
+			return;
+		}
 		int i2 = 1;
 		for (int i = 0; i < values.size(); i++) 
 		{

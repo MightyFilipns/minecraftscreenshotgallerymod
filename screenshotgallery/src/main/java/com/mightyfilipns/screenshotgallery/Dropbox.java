@@ -24,6 +24,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	List<Widget> btns = null;
 	List<Object> objl = null;
 	BiConsumer<Widget,Enum<T>> onchange = null;
+	boolean isopen = false;
 	public Dropbox(int pX, int pY, int pWidth, int pHeight,Enum<T> defaultvalue,List<Widget> buttons,BiConsumer<Widget,Enum<T>> _onchange) 
 	{
 		super(pX, pY, pWidth, pHeight, new StringTextComponent("dropbox"));
@@ -39,11 +40,6 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	{
 		return (T)current;
 	}
-	@Override
-	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks) {
-		// TODO Auto-generated method stub
-		//super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
-	}
 	// mouseClicked and onClick are required for some reason
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
@@ -54,8 +50,12 @@ public class Dropbox<T extends Enum<T>> extends Widget
 			{
 				tempbtns.get(i).onPress();
 				onchange.accept(this,(Enum<T>)current);
+				isopen = false;
+				return super.mouseClicked(pMouseX, pMouseY, pButton);
 			}
 		}
+		btns.removeAll(tempbtns);
+		tempbtns.removeAll(tempbtns);
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	@Override
@@ -67,7 +67,6 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	
 	public void setupbuttons()
 	{
-		//tempbtns.removeAll(tempbtns);
 		int i2 = 1;
 		for (int i = 0; i < values.size(); i++) 
 		{
@@ -93,5 +92,19 @@ public class Dropbox<T extends Enum<T>> extends Widget
 			tempbtns.add(btn);
 			i2++;
 		}
+		isopen = true;
+	}
+	public boolean getIsopen() 
+	{
+		return isopen;
+	}
+	public boolean setto(Enum<T> toset)
+	{
+		if(isopen)
+		{
+			return false;
+		}
+		current = toset;
+		return true;
 	}
 }

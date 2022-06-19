@@ -63,12 +63,20 @@ public class GalleryGUI extends Screen {
 	int dw = 0;
 	int dh = 100;
 	Dropbox<sortdir> sortdbox = null;
+	boolean notfirsts = false;
 	enum sortdir
 	{
 		Ascending,
 		Descending
 	}
-	
+	enum sorttype
+	{
+		lastModifiedTime,
+		lastCreatedTime,
+		filesize,
+		width,
+		height,
+	}
 	
 	public void stop()
 	{
@@ -85,6 +93,42 @@ public class GalleryGUI extends Screen {
 		scrollmaxvalue = Math.max(maxheight - height, 0);
 		scroll = Math.max(Math.min(scroll, scrollmaxvalue), 0);
 	}
+	
+	public void resort()
+	{
+		List<File> tf = Arrays.asList(files);
+		tf.sort(new Comparator<File>() 
+		{
+
+			@Override
+			public int compare(File o1, File o2) 
+			{
+				try 
+				{
+					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
+					BasicFileAttributes bf2 = Files.readAttributes(o2.toPath(), BasicFileAttributes.class);
+					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) > bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					{
+						return 1;
+					}
+					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) < bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					{
+						return -1;
+					}
+					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) == bf2.lastModifiedTime().to(TimeUnit.SECONDS))
+					{
+						return 0;
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return 0;
+			}
+		});
+		files = tf.toArray(new File[0]);
+	}
+	
+	
 	@Override
 	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
 		if(!editmode) 
@@ -95,7 +139,6 @@ public class GalleryGUI extends Screen {
 		}
 		return super.mouseScrolled(pMouseX, pMouseY, pDelta);
 	}
-	boolean notfirsts = false;
 	@Override
 	public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) 
 	{
@@ -126,7 +169,6 @@ public class GalleryGUI extends Screen {
 		}
 		return super.mouseDragged(pMouseX, pMouseY, pButton, pDragX, pDragY);
 	}
-	
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
@@ -150,6 +192,7 @@ public class GalleryGUI extends Screen {
 				disdata.add("File Name: " + files[lasthoverover].getName());
 				disdata.add("Width: " + chosen.getPixels().getWidth());
 				disdata.add("Height: "+ chosen.getPixels().getHeight());
+				disdata.add("File Size:"+files[lasthoverover].length()+ " Bytes");
 				for (int i = 0; i < disdata.size(); i++) 
 				{
 					dw = Math.max(charcoeff*disdata.get(i).length(), dw);
@@ -364,7 +407,7 @@ public class GalleryGUI extends Screen {
 	public boolean isPauseScreen() {
 		return true;
 	}
-
+	
 	@Override
 	protected void init() {
 		super.init();
@@ -376,38 +419,9 @@ public class GalleryGUI extends Screen {
 		leftover = width % screenshotxsize;
 		margin = (int) Math.floor(leftover / (perrow + 1));
 		files = screenshootdir.listFiles(ff);
-		List<File> tf = Arrays.asList(files);
-		tf.sort(new Comparator<File>() 
-		{
-
-			@Override
-			public int compare(File o1, File o2) 
-			{
-				try 
-				{
-					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
-					BasicFileAttributes bf2 = Files.readAttributes(o2.toPath(), BasicFileAttributes.class);
-					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) > bf2.lastModifiedTime().to(TimeUnit.SECONDS))
-					{
-						return 1;
-					}
-					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) < bf2.lastModifiedTime().to(TimeUnit.SECONDS))
-					{
-						return -1;
-					}
-					if(bf1.lastModifiedTime().to(TimeUnit.SECONDS) == bf2.lastModifiedTime().to(TimeUnit.SECONDS))
-					{
-						return 0;
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return 0;
-			}
-		});
-		files = tf.toArray(new File[0]);
+		resort();
 		updateimgs();
-		sortdbox = new Dropbox<sortdir>(100, 100, 50, 20, sortdir.Descending, buttons, (a,b)-> {
+		sortdbox = new Dropbox<sortdir>(width-100, 0, 100, 20, sortdir.Descending, buttons, (a,b) -> {
 			System.out.println("Changed To "+ b.name());
 		});
 		this.addButton(sortdbox);

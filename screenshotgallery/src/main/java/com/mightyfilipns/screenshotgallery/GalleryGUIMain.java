@@ -3,27 +3,21 @@ package com.mightyfilipns.screenshotgallery;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.util.InputMappings.Input;
-import net.minecraft.client.util.InputMappings.Type;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.client.event.GuiScreenEvent.KeyboardKeyEvent;
-import net.minecraftforge.client.model.generators.VariantBlockStateBuilder;
-import net.minecraftforge.common.ForgeConfig.Client;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.InterModComms;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+
+import java.io.IOException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -53,7 +47,13 @@ public class GalleryGUIMain
     KeyBinding kb =  new KeyBinding("Open Gallery", 71 , "Gallery Mod");
     private void setup(final FMLCommonSetupEvent event)
     {
-    	
+    	LOGGER.info("Building cache");
+    	try {
+			CacheManager.buildcache();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     private void doClientStuff(final FMLClientSetupEvent event) {
         // do something that can only be done on the client

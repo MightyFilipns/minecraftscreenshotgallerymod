@@ -4,21 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
-import com.mightyfilipns.screenshotgallery.GalleryGUI.sortdir;
-import com.mojang.blaze3d.matrix.MatrixStack;
-
-import net.java.games.input.Mouse;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.Button.IPressable;
 import net.minecraft.util.text.StringTextComponent;
-
+@SuppressWarnings("unchecked")
 public class Dropbox<T extends Enum<T>> extends Widget 
 {
-	private Enum current = null;
+	private Enum<T> current = null;
 	List<String> values = new ArrayList<String>();
 	List<Button> tempbtns = new ArrayList<Button>();
 	Button btn1 = null;
@@ -30,7 +23,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	{
 		super(pX, pY, pWidth, pHeight, new StringTextComponent(""));
 		current = defaultvalue;
-		objl= Arrays.asList(defaultvalue.getDeclaringClass().getEnumConstants());
+		objl= Arrays.asList((Object[])defaultvalue.getDeclaringClass().getEnumConstants());
 		objl.forEach((a)->{values.add(a.toString());});
 		btn1 = new Button(pX,pY, pWidth, pHeight,new StringTextComponent(current.name()), (a)-> setupbuttons());
 		buttons.add(btn1);
@@ -40,7 +33,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	}
 	public Enum<T> getvalue()
 	{
-		return (T)current;
+		return (Enum<T>)current;
 	}
 	// mouseClicked and onClick are required for some reason
 	@Override
@@ -94,7 +87,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 				{
 					if(object.toString().equals(b.getMessage().getString()))
 					{
-						current = (java.lang.Enum<T>) object;
+						current = (Enum<T>) object;
 						btn1.setMessage(new StringTextComponent(current.name()));
 						break;
 					}

@@ -1,6 +1,5 @@
  package com.mightyfilipns.screenshotgallery;
 
-import java.io.Console;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -9,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -23,15 +21,12 @@ import javax.imageio.stream.ImageInputStream;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.SimpleSound;
-import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.NativeImage.PixelFormat;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.StringTextComponent;
 
@@ -91,6 +86,7 @@ public class GalleryGUI extends Screen {
 	public void stop()
 	{
 		int aa = 0;
+		aa += aa;
 	}
 	protected GalleryGUI() {
 		super(new StringTextComponent("Gallery Gui"));

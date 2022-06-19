@@ -62,6 +62,7 @@ public class GalleryGUI extends Screen {
 	final int charcoeff = 5;
 	int dw = 0;
 	int dh = 100;
+	Dropbox<sortdir> sortdbox = null;
 	enum sortdir
 	{
 		Ascending,
@@ -76,13 +77,6 @@ public class GalleryGUI extends Screen {
 	protected GalleryGUI() {
 		super(new StringTextComponent("Gallery Gui"));
 		ins = this;
-		try {
-			this.addButton(new Dropbox<sortdir>(100, 100, 50, 200, sortdir.class, sortdir.Descending, buttons));
-			buttons.forEach((a)-> {System.out.println(a.getMessage().getString());});
-		} catch (Throwable e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	
 	private void calcscroll()
@@ -313,7 +307,7 @@ public class GalleryGUI extends Screen {
 				}
 				
 				int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize))+Math.max(0, screenshotxsize-imgw)/2;
-				int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll);
+				int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll)+20;
 				item.bind();
 				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
 				//System.out.println("blit " + imgw+" " + imgh+" "+x+" "+y);
@@ -413,12 +407,10 @@ public class GalleryGUI extends Screen {
 		});
 		files = tf.toArray(new File[0]);
 		updateimgs();
-		try {
-			this.addButton(new Dropbox<sortdir>(120, 100, 120, 20, sortdir.class, sortdir.Descending, buttons));
-		} catch (Throwable e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		sortdbox = new Dropbox<sortdir>(100, 100, 50, 20, sortdir.Descending, buttons, (a,b)-> {
+			System.out.println("Changed To "+ b.name());
+		});
+		this.addButton(sortdbox);
 
 	}
 	@Override
@@ -427,12 +419,6 @@ public class GalleryGUI extends Screen {
 		renderd.removeAll(renderd);
 		scroll = 0;
 		super.resize(pMinecraft, pWidth, pHeight);
-		try {
-			this.addButton(new Dropbox<sortdir>(100, 100, 50, 200, sortdir.class, sortdir.Descending, buttons));
-		} catch (Throwable e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		if(editmode)
 		{
 			filexp.x = this.width / 2-150;

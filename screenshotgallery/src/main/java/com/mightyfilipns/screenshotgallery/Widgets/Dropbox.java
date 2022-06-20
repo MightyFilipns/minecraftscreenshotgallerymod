@@ -1,9 +1,11 @@
-package com.mightyfilipns.screenshotgallery;
+package com.mightyfilipns.screenshotgallery.Widgets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
+
+import com.mightyfilipns.screenshotgallery.StaticFunctions;
 
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
@@ -17,8 +19,12 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	Button btn1 = null;
 	List<Widget> btns = null;
 	List<Object> objl = null;
-	BiConsumer<Widget,Enum<T>> onchange = null;
+	BiConsumer<Widget,Enum<T>> onchangee = null;
+	BiConsumer<Widget,Integer> onchangei = null;
 	boolean isopen = false;
+	List<String> Values = null;
+	boolean useenum = false;;
+	
 	public Dropbox(int pX, int pY, int pWidth, int pHeight,Enum<T> defaultvalue,List<Widget> buttons,BiConsumer<Widget,Enum<T>> _onchange) 
 	{
 		super(pX, pY, pWidth, pHeight, new StringTextComponent(""));
@@ -28,7 +34,7 @@ public class Dropbox<T extends Enum<T>> extends Widget
 		btn1 = new Button(pX,pY, pWidth, pHeight,new StringTextComponent(current.name()), (a)-> setupbuttons());
 		buttons.add(btn1);
 		btns = buttons;
-		onchange = _onchange;
+		onchangee = _onchange;
 		visible = true;
 	}
 	public Enum<T> getvalue()
@@ -41,12 +47,11 @@ public class Dropbox<T extends Enum<T>> extends Widget
 	{
 		for (int i = 0; i < tempbtns.size(); i++) 
 		{
-			if(GalleryGUI.iswithin((int) pMouseX, x, x+width) && GalleryGUI.iswithin((int) pMouseY, y+((i+1)*height) , y+((i+2)*height)))
+			if(StaticFunctions.iswithin((int) pMouseX, x, x+width) && StaticFunctions.iswithin((int) pMouseY, y+((i+1)*height) , y+((i+2)*height)))
 			{
 				tempbtns.get(i).onPress();
-				onchange.accept(this,(Enum<T>)current);
+				onchangee.accept(this,(Enum<T>)current);					
 				isopen = false;
-				//StaticFunctions.playDownSound();
 				return super.mouseClicked(pMouseX, pMouseY, pButton);
 			}
 		}

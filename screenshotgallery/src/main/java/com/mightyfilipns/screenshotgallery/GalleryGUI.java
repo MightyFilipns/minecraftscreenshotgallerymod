@@ -8,6 +8,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDate;
+import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.ChronoPeriod;
+import java.time.chrono.Chronology;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalField;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,6 +26,10 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import com.ibm.icu.util.LocaleData;
+import com.mightyfilipns.screenshotgallery.Widgets.DatePicker;
+import com.mightyfilipns.screenshotgallery.Widgets.Dropbox;
+import com.mightyfilipns.screenshotgallery.Widgets.Dropboxng;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
@@ -69,6 +80,7 @@ public class GalleryGUI extends Screen {
 	Dropbox<sortdir> sortdbox = null;
 	Dropbox<sorttype> sortboxtype = null;
 	boolean notfirsts = false;
+	DatePicker dp1 = null;
 	enum sortdir
 	{
 		Ascending,
@@ -110,7 +122,7 @@ public class GalleryGUI extends Screen {
 	}
 	private boolean issortingopen()
 	{
-		if(sortdbox.isopen || sortboxtype.isopen)
+		if(sortdbox.getIsopen() || sortboxtype.getIsopen())
 		{
 			return true;
 		}
@@ -294,7 +306,7 @@ public class GalleryGUI extends Screen {
 			}
 			togglesortvisibility(false);
 		}
-		StaticFunctions.playDownSound();
+		//StaticFunctions.playDownSound();
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	@Override
@@ -444,7 +456,7 @@ public class GalleryGUI extends Screen {
 				item.bind();
 				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
 				//System.out.println("blit " + imgw+" " + imgh+" "+x+" "+y);
-				if(iswithin(pMouseY, y, y+imgh) && iswithin(pMouseX, x, x+imgw) && !issortingopen())
+				if(StaticFunctions.iswithin(pMouseY, y, y+imgh) && StaticFunctions.iswithin(pMouseX, x, x+imgw) && !issortingopen())
 				{
 					whiteimg.bind();
 					blit(pMatrixStack,x,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
@@ -498,7 +510,6 @@ public class GalleryGUI extends Screen {
 	public boolean isPauseScreen() {
 		return true;
 	}
-	
 	@Override
 	protected void init() {
 		super.init();
@@ -516,6 +527,8 @@ public class GalleryGUI extends Screen {
 		sortboxtype = new Dropbox<sorttype>(width-200, 0, 100, 20, sorttype.lastModifiedTime, buttons, (a,b) -> {
 			resort();
 		});
+		dp1 = new DatePicker(100, 100, 200, 20, LocalDate.of(2020, 1, 1), LocalDate.of(2022, 3, 1), LocalDate.of(2022, 2, 1), buttons,children);
+		this.addButton(dp1);
 		this.addButton(sortdbox);
 		this.addButton(sortboxtype);
 		resort();
@@ -713,17 +726,6 @@ public class GalleryGUI extends Screen {
 			}
 		}
 		return img;
-	}
-	static boolean iswithin(int value,int lowerlimit,int upperlimit)
-	{
-		if(value >= lowerlimit && value <= upperlimit)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
 	}
 	static <T> T getlast(List<T> toget)
 	{

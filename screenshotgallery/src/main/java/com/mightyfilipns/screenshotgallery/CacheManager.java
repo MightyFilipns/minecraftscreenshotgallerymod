@@ -1,12 +1,8 @@
 package com.mightyfilipns.screenshotgallery;
 
-import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -18,7 +14,6 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.NativeImage;
 
 public class CacheManager 
 {

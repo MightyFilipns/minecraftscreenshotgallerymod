@@ -233,7 +233,11 @@ public class GalleryGUI extends Screen {
 	
 	@Override
 	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
-		if(!editmode) 
+		for (int i = 0; i < children.size(); i++) 
+		{
+			children.get(i).mouseScrolled(pMouseX, pMouseY, pDelta);
+		}
+		if(!editmode ^ dp1.isopen()) 
 		{
 			scroll -= pDelta * 10;
 			calcscroll();
@@ -527,7 +531,7 @@ public class GalleryGUI extends Screen {
 		sortboxtype = new Dropbox<sorttype>(width-200, 0, 100, 20, sorttype.lastModifiedTime, buttons, (a,b) -> {
 			resort();
 		});
-		dp1 = new DatePicker(100, 100, 200, 20, LocalDate.of(2020, 1, 1), LocalDate.of(2022, 3, 1), LocalDate.of(2022, 2, 1), buttons,children);
+		dp1 = new DatePicker(0, 0, 200, 20, LocalDate.of(2020, 1, 1), LocalDate.of(2022, 3, 1), LocalDate.of(2021, 2, 1), buttons,children);
 		this.addButton(dp1);
 		this.addButton(sortdbox);
 		this.addButton(sortboxtype);

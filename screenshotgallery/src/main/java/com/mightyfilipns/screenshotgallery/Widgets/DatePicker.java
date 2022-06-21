@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.util.text.StringTextComponent;
@@ -20,6 +22,7 @@ public class DatePicker extends Widget
 	List<String> days = new ArrayList<String>();
 	List<String> months = new ArrayList<String>();
 	List<String> years = new ArrayList<String>();
+	List<Dropboxng> dngs = new ArrayList<Dropboxng>();
 	public DatePicker(int pX, int pY, int pWidth, int pHeight,LocalDate mindate,LocalDate maxdate,LocalDate currentdate,List<Widget> btns,List<IGuiEventListener> _children) 
 	{
 		super(pX, pY, pWidth, pHeight, new StringTextComponent(""));
@@ -35,27 +38,41 @@ public class DatePicker extends Widget
 		}
 		recalcdate();
 		System.out.println("days: "+ days.size()+" months: " +months.size()+ "years: " +years.size());
-		day = new Dropboxng(pX, pY, pWidth, pHeight, initaldate.getDayOfMonth()-1, days, buttons,children, (a,b)->{
+		day = new Dropboxng(pX, pY, pWidth/3, pHeight, initaldate.getDayOfMonth()-1, days, buttons,children, (a,b)->{
 			System.out.println("day changed to " + days.get(b));
+			initaldate = LocalDate.of(initaldate.getYear(),initaldate.getMonth(), Integer.parseInt(days.get(b)));
 			recalcdate();
 		});
-		month = new Dropboxng(pX+pWidth, pY, pWidth, pHeight, initaldate.getMonthValue()-1, months, buttons,children, (a,b)->{
+		month = new Dropboxng(pX+(pWidth/3), pY, pWidth/3, pHeight, initaldate.getMonthValue()-1, months, buttons,children, (a,b)->{
 			System.out.println("month changed to " + days.get(b));
+			initaldate = LocalDate.of(initaldate.getYear(),Integer.parseInt(months.get(b)), initaldate.getDayOfMonth());
 			recalcdate();
 		});
-		year = new Dropboxng(pX+2*pWidth, pY, pWidth, pHeight, initaldate.minusYears(_mindate.getYear()).getYear(), years, buttons,children, (a,b)->{
+		year = new Dropboxng(pX+((pWidth/3)*2), pY, pWidth/3, pHeight, initaldate.minusYears(_mindate.getYear()).getYear(), years, buttons,children, (a,b)->{
 			System.out.println("year changed to " + days.get(b));
+			initaldate = LocalDate.of(Integer.parseInt(years.get(b)),initaldate.getMonth(), initaldate.getDayOfMonth());
 			recalcdate();
 		});
-		buttons.add(day);
-		children.add(day);
-		day.setopenprereq(() -> {return areallclosed();});
-		buttons.add(month);
-		children.add(month);
-		month.setopenprereq(() -> {return areallclosed();});
-		buttons.add(year);
-		children.add(year);
-		year.setopenprereq(() -> {return areallclosed();});
+		dngs.add(day);
+		dngs.add(month);
+		dngs.add(year);
+		for (Dropboxng widget : dngs) 
+		{
+			buttons.add(widget);
+			children.add(widget);
+		}
+		visible = false;
+	}
+	public boolean isopen()
+	{
+		for (Dropboxng widget : dngs) 
+		{
+			if(widget.getIsopen())
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	public void recalcdate()
 	{

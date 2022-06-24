@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent.KeyboardKeyEvent;
+import net.minecraftforge.client.event.ScreenshotEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
@@ -79,6 +80,12 @@ public class GalleryGUIMain
         // do something when the server starts
 
     }
+    @SubscribeEvent
+    public void screenshot(ScreenshotEvent event)
+    {
+    	
+    }
+    
     @SubscribeEvent
     public void keyb(KeyboardKeyEvent e)
     {

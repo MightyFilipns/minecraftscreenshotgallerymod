@@ -30,7 +30,7 @@ public class Dropboxng extends Widget
 	Consumer<Dropboxng> onopen = null;
 	boolean isopen = false;
 	int scroll = 0;
-	Supplier<Boolean> prereq = null;
+	Function<Dropboxng, Boolean> prereq = null;
 	Minecraft INSTANCE = Minecraft.getInstance();
 	public Dropboxng(int pX, int pY, int pWidth, int pHeight,int defaultvalue,List<String> _values,List<Widget> buttons,List<IGuiEventListener> _children, BiConsumer<Widget,Integer> _onchange) 
 	{
@@ -65,10 +65,20 @@ public class Dropboxng extends Widget
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
-		//System.out.println(values.size() + "dpng");
-		isopen = false;
+		if(pMouseY< y|| y+(height*values.size())< pMouseY && pMouseX< x || x+width < pMouseX)
+		{
+			btns.removeAll(tempbtns);
+			tempbtns.forEach((a)->{
+				a.visible = false;
+				a.active = false;
+			});
+			isopen= false;
+		}
+		/*//System.out.println(values.size() + "dpng");
 		btns.removeAll(tempbtns);
+		children.removeAll(tempbtns);
 		tempbtns.removeAll(tempbtns);
+		isopen= false;*/
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	@Override
@@ -82,17 +92,13 @@ public class Dropboxng extends Widget
 		btn1.visible = newstate;
 		this.visible = newstate;
 	}
-	public void setopenprereq(Supplier<Boolean> a)
+	public void setopenprereq(Function<Dropboxng, Boolean> a)
 	{
 		prereq = a;
 	}
 	public void setonopen(Consumer<Dropboxng> _onopen)
 	{
 		onopen = _onopen;
-	}
-	public void setscreenh()
-	{
-		
 	}
 	@Override
 	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) 
@@ -109,15 +115,28 @@ public class Dropboxng extends Widget
 		int h1 = INSTANCE.screen.height -(y+20);
 		int maxscroll = Math.max(btnh-h1,0);
 		int oldscroll = scroll;
-		scroll += pDelta*10;
+		scroll -= pDelta*10;
 		scroll = Math.max(Math.min(scroll, maxscroll), 0);
 		int deltatoadd = oldscroll-scroll;
 		for (int i = 0; i < tempbtns.size(); i++) 
 		{
 			tempbtns.get(i).y = (y+((i+1)*20)) -scroll;  
 		}
-		//System.out.println("scroll maxscroll"+maxscroll+ "scroll:"+scroll+ "h:"+height);
 		return super.mouseScrolled(pMouseX, pMouseY, pDelta);
+	}
+	public boolean setstring(String input)
+	{
+		int ind = values.indexOf(input);
+		if(ind == -1)
+		{
+			return false;
+		}
+		else
+		{
+			currentint = ind;
+			btn1.setMessage(new StringTextComponent(values.get(ind)));
+			return true;
+		}
 	}
 	String getcurrentvalue()
 	{
@@ -125,6 +144,12 @@ public class Dropboxng extends Widget
 	}
 	public void setupbuttons()
 	{
+		if(values.size() == 1)
+		{
+			return;
+		}
+		children.removeAll(tempbtns);
+		tempbtns.removeAll(tempbtns);
 		System.out.println(values.size() + "dpng");
 		if(isopen)
 		{
@@ -134,7 +159,7 @@ public class Dropboxng extends Widget
 			isopen= false;
 			return;
 		}
-		if(prereq != null && !prereq.get())
+		if(prereq != null && !prereq.apply(this))
 		{
 			return;
 		}
@@ -143,14 +168,14 @@ public class Dropboxng extends Widget
 		{
 			if(currentint == i)
 			{
-				//continue;
+				continue;
 			}
 			Button btn= null;
 			btn = new Button(x, y+i2*height, width, height, new StringTextComponent(values.get(i)), (b)->{
-				System.out.println(currentint+ ":"+ b.getMessage().getString());
+				//System.out.println(currentint+ ":"+ b.getMessage().getString());
 				currentint = values.indexOf(b.getMessage().getString());
-				System.out.println(currentint);
-				values.forEach((a)-> System.out.println(a));
+				//System.out.println(currentint);
+				//values.forEach((a)-> System.out.println(a));
 				btn1.setMessage(new StringTextComponent(getcurrentvalue()));
 				btns.removeAll(tempbtns);
 				children.removeAll(tempbtns);

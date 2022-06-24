@@ -81,6 +81,7 @@ public class GalleryGUI extends Screen {
 	Dropbox<sorttype> sortboxtype = null;
 	boolean notfirsts = false;
 	DatePicker dp1 = null;
+	DatePicker dp2 = null;
 	enum sortdir
 	{
 		Ascending,
@@ -88,8 +89,7 @@ public class GalleryGUI extends Screen {
 	}
 	enum sorttype
 	{
-		lastModifiedTime,
-		lastCreatedTime,
+		CreatedTime,
 		filesize,
 		width,
 		height,
@@ -97,6 +97,8 @@ public class GalleryGUI extends Screen {
 	
 	public void stop()
 	{
+		List<File> a = CacheManager.getfiles(dp1.getcurrentdate(), dp2.getcurrentdate());
+		System.out.println(a.size());
 		int aa = 0;
 		aa += aa;
 	}
@@ -132,6 +134,8 @@ public class GalleryGUI extends Screen {
 	{
 		sortdbox.setvisiblity(newstate);
 		sortboxtype.setvisiblity(newstate);
+		dp1.setvisiblity(newstate);
+		dp2.setvisiblity(newstate);
 	}
 	public void resort()
 	{
@@ -150,9 +154,11 @@ public class GalleryGUI extends Screen {
 				}
 				try 
 				{
+					long str = System.nanoTime();
 					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
 					BasicFileAttributes bf2 = Files.readAttributes(o2.toPath(), BasicFileAttributes.class);
-					
+					long str2 = System.nanoTime();
+					System.out.println(str2-str);
 					long v1 = 0;
 					long v2 = 0;
 					sorttype st = (sorttype) sortboxtype.getvalue();
@@ -166,13 +172,9 @@ public class GalleryGUI extends Screen {
 							v1 = getdim(o1, true);
 							v2 = getdim(o2, true);
 							break;
-						case lastCreatedTime:
-							v1 = bf1.creationTime().to(TimeUnit.SECONDS);
-							v2 = bf2.creationTime().to(TimeUnit.SECONDS);
-							break;
-						case lastModifiedTime:
+						case CreatedTime:
 							v1 = bf1.lastModifiedTime().to(TimeUnit.SECONDS);
-							v2 =  bf2.lastModifiedTime().to(TimeUnit.SECONDS);
+							v2 = bf2.lastModifiedTime().to(TimeUnit.SECONDS);
 							break;
 						case width:
 							v1 = getdim(o1, false);
@@ -405,7 +407,8 @@ public class GalleryGUI extends Screen {
 		}
 		if(!editmode)
 		{
-			lasthoverover = -1;			
+			lasthoverover = -1;
+			drawCenteredString(pMatrixStack, font,"To", 125, 5, 0xFF_FF_FF_FF);
 		}
 		for (DynamicTexture item : dym) 
 		{
@@ -459,7 +462,6 @@ public class GalleryGUI extends Screen {
 				int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll)+20;
 				item.bind();
 				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
-				//System.out.println("blit " + imgw+" " + imgh+" "+x+" "+y);
 				if(StaticFunctions.iswithin(pMouseY, y, y+imgh) && StaticFunctions.iswithin(pMouseX, x, x+imgw) && !issortingopen())
 				{
 					whiteimg.bind();
@@ -528,16 +530,17 @@ public class GalleryGUI extends Screen {
 		sortdbox = new Dropbox<sortdir>(width-100, 0, 100, 20, sortdir.Descending, buttons, (a,b) -> {
 			resort();
 		});
-		sortboxtype = new Dropbox<sorttype>(width-200, 0, 100, 20, sorttype.lastModifiedTime, buttons, (a,b) -> {
+		sortboxtype = new Dropbox<sorttype>(width-200, 0, 100, 20, sorttype.CreatedTime, buttons, (a,b) -> {
 			resort();
 		});
-		dp1 = new DatePicker(0, 0, 200, 20, LocalDate.of(2020, 1, 1), LocalDate.of(2022, 3, 1), LocalDate.of(2021, 2, 1), buttons,children);
+		dp1 = new DatePicker(0, 0, 100, 20, LocalDate.of(2020, 10, 10), LocalDate.of(2022, 3, 1), LocalDate.of(2021, 2, 1), buttons,children);
+		dp2 = new DatePicker(150, 0, 100, 20, LocalDate.of(2020, 10, 10), LocalDate.of(2022, 10, 1), LocalDate.of(2021, 2, 1), buttons,children);
 		this.addButton(dp1);
+		this.addButton(dp2);
 		this.addButton(sortdbox);
 		this.addButton(sortboxtype);
 		resort();
 		updateimgs();
-
 	}
 	@Override
 	public void resize(Minecraft pMinecraft, int pWidth, int pHeight) {
@@ -556,14 +559,12 @@ public class GalleryGUI extends Screen {
 		}
 	}
 	private void updateimgs() {
-		//System.out.println("called");
 		torender.removeAll(torender);
 		notdis.removeAll(notdis);
 		int a = screenshotysize + margin;
 		int v1 = (int) Math.ceil((double) height / (double) a);
 		int visible = (int) v1 * perrow;
 		int scrolleff = (int) Math.floor(scroll / a);
-		
 		try 
 		{
 			if((double)scroll%(double)a <= 10)
@@ -602,7 +603,6 @@ public class GalleryGUI extends Screen {
 				//System.out.println("same");
 				return;
 			}
-			//== can't be used because java
 			if (torender.get(0).equals(renderd.get(0 + perrow))) {
 				for (int i = 0; i < perrow; i++) {
 					dym.remove(i);

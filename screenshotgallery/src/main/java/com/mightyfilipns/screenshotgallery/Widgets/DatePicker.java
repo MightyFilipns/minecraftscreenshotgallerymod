@@ -41,23 +41,33 @@ public class DatePicker extends Widget
 		day = new Dropboxng(pX, pY, pWidth/3, pHeight, initaldate.getDayOfMonth()-1, days, buttons,children, (a,b)->{
 			System.out.println("day changed to " + days.get(b));
 			initaldate = LocalDate.of(initaldate.getYear(),initaldate.getMonth(), Integer.parseInt(days.get(b)));
+			checkdates();
 			recalcdate();
+			updatedates();
 		});
 		month = new Dropboxng(pX+(pWidth/3), pY, pWidth/3, pHeight, initaldate.getMonthValue()-1, months, buttons,children, (a,b)->{
-			System.out.println("month changed to " + days.get(b));
+			System.out.println("month changed to " + months.get(b));
 			initaldate = LocalDate.of(initaldate.getYear(),Integer.parseInt(months.get(b)), initaldate.getDayOfMonth());
+			checkdates();
 			recalcdate();
+			updatedates();
 		});
 		year = new Dropboxng(pX+((pWidth/3)*2), pY, pWidth/3, pHeight, initaldate.minusYears(_mindate.getYear()).getYear(), years, buttons,children, (a,b)->{
-			System.out.println("year changed to " + days.get(b));
+			System.out.println("year changed to " + years.get(b));
 			initaldate = LocalDate.of(Integer.parseInt(years.get(b)),initaldate.getMonth(), initaldate.getDayOfMonth());
+			checkdates();
 			recalcdate();
+			updatedates();
 		});
 		dngs.add(day);
 		dngs.add(month);
 		dngs.add(year);
 		for (Dropboxng widget : dngs) 
 		{
+			widget.prereq = (a)->{
+				closeall(a);
+				return true;
+			};
 			buttons.add(widget);
 			children.add(widget);
 		}
@@ -73,6 +83,32 @@ public class DatePicker extends Widget
 			}
 		}
 		return false;
+	}
+	public void closeall(Dropboxng exept)
+	{
+		for (Dropboxng widget : dngs) 
+		{
+			if(widget != exept)
+			{
+				widget.close();
+			}
+		}
+	}
+	public LocalDate getcurrentdate()
+	{
+		return initaldate;
+	}
+	public void setvisiblity(boolean newstate)
+	{
+		dngs.forEach((a)->{
+			a.setvisiblity(newstate);
+		});
+	}
+	public void updatedates()
+	{
+		day.setstring(initaldate.getDayOfMonth()+"");
+		month.setstring(initaldate.getMonthValue()+"");
+		year.setstring(initaldate.getYear()+"");
 	}
 	public void recalcdate()
 	{
@@ -143,7 +179,7 @@ public class DatePicker extends Widget
 				dayc = _mindate.lengthOfMonth()-_mindate.getDayOfMonth()+1;
 				for (int i = 0; i < dayc; i++) 
 				{
-					days.add((_mindate.lengthOfMonth()+i)+"");
+					days.add((_mindate.getDayOfMonth()+i)+"");
 				}
 			}
 			else
@@ -157,12 +193,12 @@ public class DatePicker extends Widget
 			dayc = initaldate.lengthOfMonth()-initaldate.getDayOfMonth()+1;
 			for (int i = 0; i < dayc; i++) 
 			{
-				days.add((initaldate.getDayOfMonth()+i)+"");
+				//days.add((initaldate.getDayOfMonth()+i)+"");
 			}
 		}
 		else if(initaldate.getYear() == _maxdate.getYear())
 		{
-			monthsc = 12-_maxdate.getMonthValue();
+			monthsc = _maxdate.getMonthValue();
 			for (int i = 0; i < monthsc; i++) 
 			{
 				months.add((i+1)+"");
@@ -191,6 +227,17 @@ public class DatePicker extends Widget
 			{
 				days.add((i+1)+"");
 			}
+		}
+	}
+	public void checkdates()
+	{
+		if(_mindate.toEpochDay()> initaldate.toEpochDay())
+		{
+			initaldate = _mindate.plusDays(0);
+		}
+		if(initaldate.toEpochDay() > _maxdate.toEpochDay())
+		{
+			initaldate = _maxdate.plusDays(0);
 		}
 	}
 	public boolean areallclosed()

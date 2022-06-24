@@ -5,24 +5,74 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.entity.ai.goal.SwimGoal;
 
 public class CacheManager 
 {
 	public CacheManager() {}
 	static File maindir = new File(Minecraft.getInstance().gameDirectory.getAbsolutePath() + "/screenshotgallerycache/");
 	static File imgcache = new File(maindir.getAbsolutePath() + "/imgcache/");
+	static File datacache = new File(maindir.getAbsolutePath() + "/datacache/");
 	static File screenshootdir = new File(Minecraft.getInstance().gameDirectory.getAbsolutePath(), "/screenshots/");
 	static FileFilter ff = file -> !file.isDirectory() && file.getName().endsWith(".png");
 	static List<File> files = null;
+	static List<imgdata> imgd = new ArrayList<imgdata>();
+	private static int getdim(File img,boolean height)
+	{
+		try(ImageInputStream in = ImageIO.createImageInputStream(img)){
+		    final Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
+		    if (readers.hasNext()) {
+		        ImageReader reader = readers.next();
+		        try {
+		            reader.setInput(in);
+		            if(height)
+		            {
+		            	return reader.getHeight(0);
+		            }
+		            else
+		            {
+		            	return reader.getWidth(0);
+		            }
+		        } finally {
+		            reader.dispose();
+		        }
+		    }
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		return 0;
+	}
 	public static void buildcache() throws IOException
 	{
 		if(!maindir.exists())
@@ -33,12 +83,19 @@ public class CacheManager
 		{
 			Files.createDirectory(Paths.get(imgcache.getAbsolutePath()));
 		}
+		if(!datacache.exists())
+		{
+			Files.createDirectory(Paths.get(datacache.getAbsolutePath()));
+		}
 		files = Arrays.asList(screenshootdir.listFiles(ff));
 		for (File file : files) 
 		{
-			
+			boolean done = false;
 			if(Files.exists(Paths.get(imgcache.getAbsolutePath()+"/"+file.getName())))
-			{
+			{			
+				BasicFileAttributes bf = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+				imgd.add(new imgdata(file,getdim(file, true),getdim(file, false),LocalDate.ofInstant(bf.lastModifiedTime().toInstant(), ZoneId.systemDefault()),file.length()));
+				done= true;
 				continue;
 			}
 			BufferedImage img;
@@ -94,6 +151,149 @@ public class CacheManager
 			img2 = ato.filter(img, img2);
 			File newimg = new File(imgcache.getAbsolutePath()+"/"+file.getName());
 			ImageIO.write(img2, "png", newimg);
+			if(!done)
+			{
+				BasicFileAttributes bf = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+				imgd.add(new imgdata(file,img.getWidth(),img.getHeight(),LocalDate.ofInstant(bf.lastModifiedTime().toInstant(), ZoneId.systemDefault()),file.length()));				
+			}
 		}
+		imgd.sort(new Comparator<imgdata>() {
+
+			@Override
+			public int compare(imgdata o1, imgdata o2) {
+				try {
+					BasicFileAttributes bf1 = Files.readAttributes(o1.img.toPath(), BasicFileAttributes.class);
+					BasicFileAttributes bf2 = Files.readAttributes(o2.img.toPath(), BasicFileAttributes.class);
+					long v1 = 0;
+					long v2 = 0;
+					v1 = bf1.lastModifiedTime().to(TimeUnit.DAYS);
+					v2 = bf2.lastModifiedTime().to(TimeUnit.DAYS);
+					if(v1 > v2)
+					{
+						return 1;
+					}
+					if(v1 < v2)
+					{
+						return -1;
+					}
+					if(v1 == v2)
+					{
+						return 0;
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return 0;
+			}
+		});
+		files.sort(new Comparator<File>() {
+
+			@Override
+			public int compare(File o1, File o2) {
+				try {
+					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
+					BasicFileAttributes bf2 = Files.readAttributes(o2.toPath(), BasicFileAttributes.class);
+					long v1 = 0;
+					long v2 = 0;
+					v1 = bf1.lastModifiedTime().to(TimeUnit.DAYS);
+					v2 = bf2.lastModifiedTime().to(TimeUnit.DAYS);
+					if(v1 > v2)
+					{
+						return 1;
+					}
+					if(v1 < v2)
+					{
+						return -1;
+					}
+					if(v1 == v2)
+					{
+						return 0;
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return 0;
+			}
+		});
 	}
+	public static void addnewsc(File newimg)
+	{
+		//implement
+	}
+	public static List<File> getfiles(LocalDate min,LocalDate max)
+	{
+		System.out.println(imgd.size());
+		int i1 = getclosestvalue(min);
+		int i2 = getclosestvalue(max);
+		System.out.println(i1 +":"+ i2 + " : "+min.toEpochDay() + " : "+max.toEpochDay());
+		List<imgdata> nd = imgd.subList(i1, i2);
+		List<File> nf = nd.stream().map(imgdata::getFile).collect(Collectors.toList());
+		return nf;
+	}
+	static int getclosestvalue(LocalDate date)
+	{/*
+		int i = 0;/
+		while(imgd.get(i).createdtime.toEpochDay() > date.toEpochDay())
+		{
+			System.out.println(imgd.get(i).createdtime + " :: "+date);
+			if(i+1 >= imgd.size())
+			{
+				return i;
+			}
+			i++;
+		}
+		return i;*/
+		
+		int first = 0;
+	    int last = imgd.size() - 1;
+	    int mid = 0;
+	    do
+	    {
+	        mid = first + (last - first) / 2;
+	        if (date.toEpochDay() > imgd.get(mid).createdtime.toEpochDay())
+	            first = mid + 1;
+	        else
+	            last = mid - 1;
+	        if (imgd.get(mid).createdtime == date)
+	            return mid;
+	    } while (first <= last);
+	    return mid;
+	}
+	public DynamicTexture gethumbnail(String imgname)
+	{
+		try(InputStream str = new FileInputStream(imgcache.getAbsolutePath()+"/"+imgname))
+		{
+			return new DynamicTexture(NativeImage.read(str));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+}
+class imgdata
+{
+	
+	public imgdata(File img, int height, int width, LocalDate createdtime, long filesize) 
+	{
+		this.img = img;
+		this.height = height;
+		this.width = width;
+		this.createdtime = createdtime;
+		this.filesize = filesize;
+	}
+	public File getFile()
+	{
+		return img;
+	}
+	File img;
+	int height;
+	int width;
+	LocalDate createdtime;
+	long filesize;
 }

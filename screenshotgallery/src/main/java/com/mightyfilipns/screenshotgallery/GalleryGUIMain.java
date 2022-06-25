@@ -98,7 +98,7 @@ public class GalleryGUIMain
     @SubscribeEvent
     public void keyb(KeyboardKeyEvent e)
     {
-    	if(e.getKeyCode() == 65)
+    	if(e.getKeyCode() == 65 && INSTANCE.screen instanceof GalleryGUI)
     	{
     		GalleryGUI.ins.stop();	
     	}

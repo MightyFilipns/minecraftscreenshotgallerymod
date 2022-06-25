@@ -1,27 +1,22 @@
 package com.mightyfilipns.screenshotgallery.Widgets;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IGuiEventListener;
-import net.minecraft.client.gui.widget.Widget;
-
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-import com.mightyfilipns.screenshotgallery.StaticFunctions;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.IGuiEventListener;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.StringTextComponent;
 
-public class Dropboxng extends Widget 
+public class Dropboxng extends Widget
 {
 	private int currentint = -1;
-	List<String> values = new ArrayList<String>();
-	List<Button> tempbtns = new ArrayList<Button>();
+	List<String> values = new ArrayList<>();
+	List<Button> tempbtns = new ArrayList<>();
 	Button btn1 = null;
 	List<Widget> btns = null;
 	List<Object> objl = null;
@@ -32,7 +27,7 @@ public class Dropboxng extends Widget
 	int scroll = 0;
 	Function<Dropboxng, Boolean> prereq = null;
 	Minecraft INSTANCE = Minecraft.getInstance();
-	public Dropboxng(int pX, int pY, int pWidth, int pHeight,int defaultvalue,List<String> _values,List<Widget> buttons,List<IGuiEventListener> _children, BiConsumer<Widget,Integer> _onchange) 
+	public Dropboxng(int pX, int pY, int pWidth, int pHeight,int defaultvalue,List<String> _values,List<Widget> buttons,List<IGuiEventListener> _children, BiConsumer<Widget,Integer> _onchange)
 	{
 		super(pX, pY, pWidth, pHeight, new StringTextComponent(""));
 		values = _values;
@@ -60,10 +55,10 @@ public class Dropboxng extends Widget
 		tempbtns.removeAll(tempbtns);
 		isopen= false;
 	}
-	
+
 	// mouseClicked and onClick are required for some reason
 	@Override
-	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
+	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton)
 	{
 		if(pMouseY< y|| y+(height*values.size())< pMouseY && pMouseX< x || x+width < pMouseX)
 		{
@@ -81,7 +76,7 @@ public class Dropboxng extends Widget
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	@Override
-	public void onClick(double pMouseX, double pMouseY) 
+	public void onClick(double pMouseX, double pMouseY)
 	{
 		//System.out.println(values.size() + "dpng");
 		super.onClick(pMouseX, pMouseY);
@@ -100,26 +95,22 @@ public class Dropboxng extends Widget
 		onopen = _onopen;
 	}
 	@Override
-	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) 
+	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta)
 	{
-		if(!isopen)
-		{
-			return false;
-		}
-		if(INSTANCE.screen == null)
+		if(!isopen || (INSTANCE.screen == null))
 		{
 			return false;
 		}
 		int btnh = (values.size()-1)*20;
 		int h1 = INSTANCE.screen.height -(y+20);
 		int maxscroll = Math.max(btnh-h1,0);
-		int oldscroll = scroll;
 		scroll -= pDelta*10;
 		scroll = Math.max(Math.min(scroll, maxscroll), 0);
-		int deltatoadd = oldscroll-scroll;
-		for (int i = 0; i < tempbtns.size(); i++) 
+		//int oldscroll = scroll;
+		//int deltatoadd = oldscroll-scroll;
+		for (int i = 0; i < tempbtns.size(); i++)
 		{
-			tempbtns.get(i).y = (y+((i+1)*20)) -scroll;  
+			tempbtns.get(i).y = (y+((i+1)*20)) -scroll;
 		}
 		return super.mouseScrolled(pMouseX, pMouseY, pDelta);
 	}
@@ -163,7 +154,7 @@ public class Dropboxng extends Widget
 			return;
 		}
 		int i2 = 1;
-		for (int i = 0; i < values.size(); i++) 
+		for (int i = 0; i < values.size(); i++)
 		{
 			if(currentint == i)
 			{
@@ -197,7 +188,7 @@ public class Dropboxng extends Widget
 		}
 		isopen = true;
 	}
-	public boolean getIsopen() 
+	public boolean getIsopen()
 	{
 		return isopen;
 	}

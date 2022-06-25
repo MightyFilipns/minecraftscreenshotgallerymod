@@ -9,12 +9,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
-import java.time.chrono.ChronoLocalDate;
-import java.time.chrono.ChronoPeriod;
-import java.time.chrono.Chronology;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalField;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -26,12 +20,12 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
-import com.ibm.icu.util.LocaleData;
 import com.mightyfilipns.screenshotgallery.Widgets.DatePicker;
 import com.mightyfilipns.screenshotgallery.Widgets.Dropbox;
-import com.mightyfilipns.screenshotgallery.Widgets.Dropboxng;
 import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -44,10 +38,10 @@ import net.minecraft.util.text.StringTextComponent;
 public class GalleryGUI extends Screen {
 	private static final Minecraft INSTANCE = Minecraft.getInstance();
 	public static DynamicTexture whiteimg = new DynamicTexture(whitesq(10, 10));
-	List<DynamicTexture> dym = new ArrayList<DynamicTexture>();
-	List<Integer> torender = new ArrayList<Integer>();
-	List<Integer> renderd = new ArrayList<Integer>();
-	List<Integer> notdis = new ArrayList<Integer>();
+	List<DynamicTexture> dym = new ArrayList<>();
+	List<Integer> torender = new ArrayList<>();
+	List<Integer> renderd = new ArrayList<>();
+	List<Integer> notdis = new ArrayList<>();
 	final static int screenshotxsize = 200;
 	final static int screenshotysize = 112;
 	File[] files;
@@ -61,19 +55,19 @@ public class GalleryGUI extends Screen {
 	int scrollmaxvalue;
 	int maxheight;
 	static GalleryGUI ins = null;
-	int hoverborder = 5; 
+	int hoverborder = 5;
 	int lasthoverover = -1;
 	boolean editmode = false;
 	DynamicTexture chosen = null;
-	
+
 	Button filexp = null;
 	Button details = null;
 	Button aspectratiob = null;
-	
+
 	boolean respectaspectration = true;
 	boolean detailsopen = false;
 	BasicFileAttributes attr = null;
-	List<String> disdata = new ArrayList<String>();
+	List<String> disdata = new ArrayList<>();
 	final int charcoeff = 5;
 	int dw = 0;
 	int dh = 100;
@@ -94,7 +88,7 @@ public class GalleryGUI extends Screen {
 		width,
 		height,
 	}
-	
+
 	public void stop()
 	{
 		int aa = 0;
@@ -104,14 +98,14 @@ public class GalleryGUI extends Screen {
 		super(new StringTextComponent("Gallery Gui"));
 		ins = this;
 	}
-	
+
 	private void calcscroll()
 	{
-		maxheight = (int) ((margin + screenshotysize) * Math.ceil(((float)files.length / (float)perrow)));
+		maxheight = (int) ((margin + screenshotysize) * Math.ceil(((float)files.length / (float)perrow)))+20;
 		scrollmaxvalue = Math.max(maxheight - height, 0);
 		scroll = Math.max(Math.min(scroll, scrollmaxvalue), 0);
 	}
-	
+
 	public void newimgs()
 	{
 		if(dp1.getcurrentdate().toEpochDay() > dp2.getcurrentdate().toEpochDay())
@@ -126,10 +120,10 @@ public class GalleryGUI extends Screen {
 		calcscroll();
 		updateimgs();
 	}
-		
+
 	public boolean issortinghovered()
-	{	
-		if(sortdbox.isHovered() || sortboxtype.isHovered())
+	{
+		if(sortdbox.isHovered() || sortboxtype.isHovered() || dp1.isHovered() || dp2.isHovered())
 		{
 			return true;
 		}
@@ -154,19 +148,19 @@ public class GalleryGUI extends Screen {
 	{
 		newimgs();
 		List<File> tf = Arrays.asList(files);
-		tf.sort(new Comparator<File>() 
+		tf.sort(new Comparator<File>()
 		{
 			int postivevalue = -1;
 			int negativevalue = 1;
 			@Override
-			public int compare(File o1, File o2) 
+			public int compare(File o1, File o2)
 			{
 				if(sortdbox.getvalue() == sortdir.Ascending)
 				{
 					postivevalue = 1;
 					negativevalue = -1;
 				}
-				try 
+				try
 				{
 					//long str = System.nanoTime();
 					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
@@ -176,7 +170,7 @@ public class GalleryGUI extends Screen {
 					long v1 = 0;
 					long v2 = 0;
 					sorttype st = (sorttype) sortboxtype.getvalue();
-					switch (st) 
+					switch (st)
 					{
 						case filesize:
 							v1 = o1.length();
@@ -195,7 +189,7 @@ public class GalleryGUI extends Screen {
 							v2 = getdim(o2, false);
 							break;
 						default:
-							
+
 							break;
 					}
 
@@ -241,39 +235,38 @@ public class GalleryGUI extends Screen {
 		    }
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 		return 0;
 	}
-	
+
 	@Override
 	public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
-		for (int i = 0; i < children.size(); i++) 
-		{
-			children.get(i).mouseScrolled(pMouseX, pMouseY, pDelta);
+		for (IGuiEventListener child : children) {
+			child.mouseScrolled(pMouseX, pMouseY, pDelta);
 		}
-		if(!editmode ^ dp1.isopen()) 
+		if(!editmode ^ (dp1.isopen() || dp2.isopen()))
 		{
 			scroll -= pDelta * 10;
 			calcscroll();
-			updateimgs();			
+			updateimgs();
 		}
 		return super.mouseScrolled(pMouseX, pMouseY, pDelta);
 	}
 	@Override
-	public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) 
+	public boolean mouseReleased(double pMouseX, double pMouseY, int pButton)
 	{
 		notfirsts = false;
 		if(!editmode)
 		{
 			dym.removeAll(dym);
-			renderd.removeAll(renderd);			
+			renderd.removeAll(renderd);
 		}
 		calcscroll();
 		updateimgs();
 		return super.mouseReleased(pMouseX, pMouseY, pButton);
 	}
 	@Override
-	public boolean mouseDragged(double pMouseX, double pMouseY, int pButton, double pDragX, double pDragY) 
+	public boolean mouseDragged(double pMouseX, double pMouseY, int pButton, double pDragX, double pDragY)
 	{
 		if(pMouseX < 0 || pMouseY <0 || pMouseX > width || pDragY > height)
 		{
@@ -281,27 +274,27 @@ public class GalleryGUI extends Screen {
 		}
 		float scrollp = (float)scroll/((float)scrollmaxvalue);
 		int y = (int) (scrollp*(height-15));
-		if(pMouseX > width-15 || notfirsts && !editmode && pMouseY+50 > y && y > pMouseY-30)
+		if(pMouseX > width-15 || notfirsts && !editmode && pMouseY+50 > y && y > pMouseY-30 && !sortdbox.getIsopen())
 		{
 			notfirsts = true;
-			scroll = (int) (scrollmaxvalue*(pMouseY/(float)height));
+			scroll = (int) (scrollmaxvalue*(pMouseY/height));
 			updateimgs();
 		}
 		return super.mouseDragged(pMouseX, pMouseY, pButton, pDragX, pDragY);
 	}
 	@Override
-	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
+	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton)
 	{
-		
-		if(lasthoverover > -1 && !editmode && files[lasthoverover] != null && !issortingopen())
+
+		if(lasthoverover > -1 && !editmode && files[lasthoverover] != null && !issortingopen() && !issortinghovered())
 		{
 			editmode = true;
-			chosen = loadimg(files[lasthoverover]);	
+			chosen = loadimg(files[lasthoverover]);
 			filexp = new Button(this.width / 2 - 150, this.height-20, 150, 20, new StringTextComponent("Open in default image viewer"), (a) -> {
 				Util.getPlatform().openFile(files[lasthoverover]);
 		     });
 			this.addButton(filexp);
-			details = new Button(this.width / 2, this.height-20, 150, 20, new StringTextComponent("More details"), (a) -> 
+			details = new Button(this.width / 2, this.height-20, 150, 20, new StringTextComponent("More details"), (a) ->
 			{
 				detailsopen = true;
 		     });
@@ -314,11 +307,10 @@ public class GalleryGUI extends Screen {
 				disdata.add("Width: " + chosen.getPixels().getWidth());
 				disdata.add("Height: "+ chosen.getPixels().getHeight());
 				disdata.add("File Size:"+files[lasthoverover].length()+ " Bytes");
-				for (int i = 0; i < disdata.size(); i++) 
-				{
-					dw = Math.max(charcoeff*disdata.get(i).length(), dw);
+				for (String element : disdata) {
+					dw = Math.max(charcoeff*element.length(), dw);
 				}
-				
+
 			} catch (IOException e) {
 				details.setMessage(new StringTextComponent("Error: " + e.getMessage()));
 				e.printStackTrace();
@@ -329,7 +321,7 @@ public class GalleryGUI extends Screen {
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	@Override
-	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks) 
+	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks)
 	{
 		perrow = Math.max(1, Math.floorDiv(width, screenshotxsize));
 		leftover = width % screenshotxsize;
@@ -345,18 +337,18 @@ public class GalleryGUI extends Screen {
 		{
 			int m2 = 30;
 			int m3 = m2;
-			
+
 			int imgw = width-(2*m2);
 			int imgh = height-(2*m3);
-			
+
 			int min = Math.min(imgw, imgh);
-			
+
 			int chosenh = chosen.getPixels().getHeight();
 			int chosenw = chosen.getPixels().getWidth();
-			
+
 			float ratio = (float)chosenw/(float)chosenh;
 			if(respectaspectration)
-			{				
+			{
 				if(chosenw < chosenh)
 				{
 					imgw = (int) (imgh*ratio);
@@ -383,8 +375,8 @@ public class GalleryGUI extends Screen {
 				m2 = width/2-imgw/2;
 				m3 = height/2-imgh/2;
 			}
-			
-			
+
+
 			chosen.bind();
 			blit(pMatrixStack,m2,m3,imgw,imgh, 0, 0,1,1,1,1);
 			if(attr != null && detailsopen)
@@ -398,20 +390,20 @@ public class GalleryGUI extends Screen {
 				fill(pMatrixStack, x1, y1, x2, y1-10,bordercolor);
 				fill(pMatrixStack, x2, y1-10, x2+10, y2+10,bordercolor);
 				fill(pMatrixStack, x1, y2, x2, y2+10,bordercolor);
-				
+
 				fill(pMatrixStack, x1, y1, x2, y2,this.minecraft.options.getBackgroundColor(0.7f));
-				
-				for (int i = 0; i < disdata.size(); i++) 
+
+				for (int i = 0; i < disdata.size(); i++)
 				{
 					drawString(pMatrixStack, this.font, disdata.get(i), x1, y1+(i*10), 0xff_ff_ff_ff);
 				}
 			}
 		}
-		
+		//updateimgs();
 		calcscroll();
 		if(renderd.size() != 0)
 		{
-			pos2 = renderd.get(0)/perrow;			
+			pos2 = renderd.get(0)/perrow;
 		}
 		else
 		{
@@ -424,12 +416,12 @@ public class GalleryGUI extends Screen {
 			int tosw = 125;
 			if(width < 450)
 			{
-				int lefo = width-200;
+				int lefo = width-212;
 				tosw = lefo/2;
 			}
 			drawCenteredString(pMatrixStack, font,"To", tosw, 5, 0xFF_FF_FF_FF);
 		}
-		for (DynamicTexture item : dym) 
+		for (DynamicTexture item : dym)
 		{
 			if(editmode)
 			{
@@ -442,17 +434,17 @@ public class GalleryGUI extends Screen {
 			if(item != null)
 			{
 				final float ratio = screenshotxsize/(float)(screenshotysize);
-				
+
 				int imgh =screenshotysize;
 				int imgw = screenshotxsize;
-				
+
 				NativeImage chosen = item.getPixels();
-				
+
 				int chosenw = chosen.getWidth();
 				int chosenh = chosen.getHeight();
-				
+
 				int min = Math.min(imgw, imgh);
-				
+
 				if(chosenw < chosenh)
 				{
 					imgw = (int) (imgh/ratio);
@@ -476,12 +468,12 @@ public class GalleryGUI extends Screen {
 					imgh = min;
 					imgw = min;
 				}
-				
+
 				int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize))+Math.max(0, screenshotxsize-imgw)/2;
 				int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll)+20;
 				item.bind();
 				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
-				if(StaticFunctions.iswithin(pMouseY, y, y+imgh) && StaticFunctions.iswithin(pMouseX, x, x+imgw) && !issortingopen())
+				if(StaticFunctions.iswithin(pMouseY, y, y+imgh) && StaticFunctions.iswithin(pMouseX, x, x+imgw) && !issortingopen() && !issortinghovered())
 				{
 					whiteimg.bind();
 					blit(pMatrixStack,x,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
@@ -497,7 +489,7 @@ public class GalleryGUI extends Screen {
 				{
 					int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize));
 					int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll);
-					drawString(pMatrixStack, this.font, "Error Encountered" , x, y, 0xFF_FF_FF_FF);					
+					drawString(pMatrixStack, this.font, "Error Encountered" , x, y, 0xFF_FF_FF_FF);
 				}
 			}
 			pos1++;
@@ -513,7 +505,7 @@ public class GalleryGUI extends Screen {
 		super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
 	}
 	@Override
-	public boolean shouldCloseOnEsc() 
+	public boolean shouldCloseOnEsc()
 	{
 		if(detailsopen)
 		{
@@ -534,7 +526,7 @@ public class GalleryGUI extends Screen {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean isPauseScreen() {
 		return true;
@@ -542,7 +534,7 @@ public class GalleryGUI extends Screen {
 	@Override
 	protected void init() {
 		super.init();
-		if (!screenshootdir.exists()) 
+		if (!screenshootdir.exists())
 		{
 			return;
 		}
@@ -553,20 +545,20 @@ public class GalleryGUI extends Screen {
 		int dpw = 100;
 		if(width < 450)
 		{
-			int lefto = width-200;
+			int lefto = width-212;
 			int one5 = lefto/5;
 			dpw = one5*2;
 		}
-		sortdbox = new Dropbox<sortdir>(width-100, 0, 100, 20, sortdir.Ascending, buttons, (a,b) -> {
+		sortdbox = new Dropbox<>(width-100-12, 0, 100, 20, sortdir.Ascending, buttons, (a,b) -> {
 			resort();
 		});
-		sortboxtype = new Dropbox<sorttype>(width-200, 0, 100, 20, sorttype.CreatedTime, buttons, (a,b) -> {
+		sortboxtype = new Dropbox<>(width-200-12, 0, 100, 20, sorttype.CreatedTime, buttons, (a,b) -> {
 			resort();
 		});
 		dp1 = new DatePicker(0, 0, dpw, 20, CacheManager.getearliestdate(), LocalDate.now(),CacheManager.getearliestdate(), buttons,children);
 		dp2 = new DatePicker((int)(dpw*1.5f), 0, dpw, 20, CacheManager.getearliestdate(), LocalDate.now(), LocalDate.now(), buttons,children);
-		this.addButton(dp1);
-		this.addButton(dp2);
+		this.addWidget(dp1);
+		this.addWidget(dp2);
 		this.addButton(sortdbox);
 		this.addButton(sortboxtype);
 		dp1.setOnchange((a)->{
@@ -595,20 +587,22 @@ public class GalleryGUI extends Screen {
 			this.addButton(details);
 		}
 	}
+	boolean sttime= true;
 	private void updateimgs() {
 		torender.removeAll(torender);
 		notdis.removeAll(notdis);
 		int a = screenshotysize + margin;
 		int v1 = (int) Math.ceil((double) height / (double) a);
-		int visible = (int) v1 * perrow;
+		int visible = v1 * perrow;
 		int scrolleff = (int) Math.floor(scroll / a);
-		try 
+		try
 		{
+			long str = System.nanoTime();
 			if((double)scroll%(double)a <= 10)
 			{
 				visible+=perrow;
 			}
-			for (int i = 0; i < visible; i++) 
+			for (int i = 0; i < visible; i++)
 			{
 				if(i+(scrolleff*perrow) >= files.length)
 				{
@@ -616,14 +610,13 @@ public class GalleryGUI extends Screen {
 				}
 				torender.add(i + (scrolleff * perrow));
 			}
-			
 			//System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));
 			//System.out.println(torender);
-			if (renderd.size() == 0) 
+			if (renderd.size() == 0)
 			{
 				int tol = Math.min(files.length, torender.size());
 				//System.out.println(torender.size()+ " " +files.length);
-				for (int i = 0; i < tol; i++) 
+				for (int i = 0; i < tol; i++)
 				{
 					if(notdis.contains(torender.get(i)))
 					{
@@ -632,85 +625,150 @@ public class GalleryGUI extends Screen {
 					}
 					dym.add(loadimgresized(files[torender.get(i)]));
 				}
-				renderd = new ArrayList<Integer>(torender);
+				renderd = new ArrayList<>(torender);
 				//System.out.println("initial");
+				System.out.println(str-System.nanoTime());
 				return;
 			}
-			if (torender.get(0) == renderd.get(0)) {
+			if (torender.get(0).equals(renderd.get(0))) {
 				//System.out.println("same");
 				return;
 			}
-			if (torender.get(0).equals(renderd.get(0 + perrow))) {
-				for (int i = 0; i < perrow; i++) {
-					dym.remove(i);
-					//System.out.println("removal "+ renderd.get(i));
-				}
-				for (int i = 0; i < perrow; i++) 
+			else
+			{
+				renderd.clear();
+				dym.clear();
+				int tol = Math.min(files.length, torender.size());
+				//System.out.println(torender.size()+ " " +files.length);
+				for (int i = 0; i < tol; i++)
 				{
-					int fi = Math.abs(i-perrow);
-					if(notdis.contains(torender.get(torender.size() - fi)))
+					if(notdis.contains(torender.get(i)))
 					{
 						dym.add(null);
 						continue;
 					}
-					dym.add(loadimgresized(files[torender.get(torender.size() - fi)]));
+					dym.add(loadimgresized(files[torender.get(i)]));
 				}
-				for (int i = 0; i < perrow; i++) 
+				renderd = new ArrayList<>(torender);
+				System.out.println((System.nanoTime()-str)/1000000f);
+				return;
+			}/*
+			// scroll down
+			if (torender.get(0).equals(renderd.get(0 + perrow))) {
+				
+				renderd.clear();
+				dym.clear();
+				int tol = Math.min(files.length, torender.size());
+				//System.out.println(torender.size()+ " " +files.length);
+				for (int i = 0; i < tol; i++)
 				{
-					dym.set(i, loadimgresized(files[torender.get(i)])); // i couldn't figure out what's wrong with the code above, so i added this to "fix" it 				
+					if(notdis.contains(torender.get(i)))
+					{
+						dym.add(null);
+						continue;
+					}
+					dym.add(loadimgresized(files[torender.get(i)]));
 				}
-				renderd = new ArrayList<Integer>(torender);
+				renderd = new ArrayList<>(torender);
+				//System.out.println("initial");
+				
+				
+				
+				
+				
+				
+				for (int i = 0; i < perrow; i++) {
+					dym.remove(i);
+					//System.out.println("removal "+ renderd.get(i));
+				}
+				for (int i = 0; i < perrow; i++)
+				{
+					int fi = Math.abs(i-perrow);
+					if(notdis.contains(torender.get(torender.size() - fi - (sttime ? 0: perrow))))
+					{
+						dym.add(null);
+						continue;
+					}
+					dym.add(loadimgresized(files[torender.get(torender.size() - fi-(sttime ? 0: perrow))]));
+				}
+				for (int i = 0; i < perrow; i++)
+				{
+					dym.set(i, loadimgresized(files[torender.get(i)])); // i couldn't figure out what's wrong with the code above, so i added this to "fix" it
+				}
+				renderd = new ArrayList<>(torender);
 				//System.out.println("scroll down");
-				// scroll down
+				if(sttime)
+				{
+					sttime = false;
+				}
+				System.out.println((System.nanoTime()-str)/1000000f);
 				return;
 			}
-			//fix
+			//scroll up
 			if (torender.get(0 + perrow).equals(renderd.get(0)))
 			{
+				renderd.clear();
+				dym.clear();
+				int tol = Math.min(files.length, torender.size());
+				//System.out.println(torender.size()+ " " +files.length);
+				for (int i = 0; i < tol; i++)
+				{
+					if(notdis.contains(torender.get(i)))
+					{
+						dym.add(null);
+						continue;
+					}
+					dym.add(loadimgresized(files[torender.get(i)]));
+				}
+				renderd = new ArrayList<>(torender);
+				//System.out.println("initial");
+				
+				
 				if(getlast(renderd) != getlast(torender))
 				{
 					if(notdis.size() !=0)
 					{
 						//last row special
-						for (int i = 0; i < perrow-notdis.size(); i++) 
+						for (int i = 0; i < perrow-notdis.size(); i++)
 						{
 							dym.remove((dym.size() - 1) - i);
 						}
 					}
 					else
 					{
-						for (int i = 0; i < perrow; i++) 
+						for (int i = 0; i < perrow; i++)
 						{
 							dym.remove(dym.size() - 1);
-						}		
-					}		
+						}
+					}
 				}
-				List<DynamicTexture> ndym = new ArrayList<DynamicTexture>();
+				List<DynamicTexture> ndym = new ArrayList<>();
 				for (int i = 0; i < perrow; i++) {
 					ndym.add(loadimgresized(files[torender.get(i)]));
 				}
 				dym.addAll(0, ndym);
-				for (int i = 0; i < perrow; i++) 
+				for (int i = 0; i < perrow; i++)
 				{
 					if(dym.get(dym.size()-i-1) == null)
 					{
 						continue;
-					}			
+					}
 				}
-				renderd = new ArrayList<Integer>(torender);
+				renderd = new ArrayList<>(torender);
 				//System.out.println("scroll up");
 				// scroll up
+				System.out.println((System.nanoTime()-str)/1000000f);
 				return;
-			}
+			}*/
 			//System.out.println("no ifs fulfilled "+ torender.get(0)+" "+renderd.get(0 + perrow) +" : "+ torender.get(0).equals(renderd.get(0 + perrow)));
 		}
-		catch (IndexOutOfBoundsException e) 
+		catch (IndexOutOfBoundsException e)
 		{
 			dym.removeAll(dym);
 			renderd.removeAll(renderd);
 			scroll = 0;
 			calcscroll();
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 
 	}
@@ -726,10 +784,10 @@ public class GalleryGUI extends Screen {
 			int y = x;
 			if((float)nativeimage.getWidth()/(float)nativeimage.getHeight() != 0)
 			{
-				y /= (float)nativeimage.getWidth()/(float)nativeimage.getHeight(); 				
+				y /= (float)nativeimage.getWidth()/(float)nativeimage.getHeight();
 			}
-			
-			
+
+
 			nativeimage = resize(x, y, nativeimage);
 			//System.out.println(System.currentTimeMillis()-start+" full");
 			return new DynamicTexture(nativeimage);
@@ -753,8 +811,8 @@ public class GalleryGUI extends Screen {
 		}
 		return null;
 	}
-	
-	private static NativeImage resize(int width, int height, NativeImage org) {
+
+	/*private static NativeImage resize(int width, int height, NativeImage org) {
 		NativeImage img = new NativeImage(width, height, false);
 		double x_ratio = org.getWidth() / (double) width;
 		double y_ratio = org.getHeight() / (double) height;
@@ -767,7 +825,7 @@ public class GalleryGUI extends Screen {
 			}
 		}
 		return img;
-	}
+	}*/
 	static <T> T getlast(List<T> toget)
 	{
 		if(toget == null || toget.size() == 0)
@@ -779,9 +837,9 @@ public class GalleryGUI extends Screen {
 	static NativeImage whitesq(int x,int y)
 	{
 		NativeImage ni = new NativeImage(PixelFormat.RGBA,x,y,false);
-		for (int i = 0; i < x; i++) 
+		for (int i = 0; i < x; i++)
 		{
-			for (int j = 0; j < y; j++) 
+			for (int j = 0; j < y; j++)
 			{
 				ni.setPixelRGBA(i, j, -1);
 			}

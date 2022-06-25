@@ -73,18 +73,17 @@ public class Dropboxng extends Widget
 				a.active = false;
 			});
 			isopen= false;
+			btns.removeAll(tempbtns);
+			tempbtns.removeAll(tempbtns);
 		}
-		/*//System.out.println(values.size() + "dpng");
-		btns.removeAll(tempbtns);
-		children.removeAll(tempbtns);
-		tempbtns.removeAll(tempbtns);
-		isopen= false;*/
+		//System.out.println(values.size() + "dpng");
+		//children.removeAll(tempbtns);
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	@Override
 	public void onClick(double pMouseX, double pMouseY) 
 	{
-		System.out.println(values.size() + "dpng");
+		//System.out.println(values.size() + "dpng");
 		super.onClick(pMouseX, pMouseY);
 	}
 	public void setvisiblity(boolean newstate)
@@ -150,7 +149,7 @@ public class Dropboxng extends Widget
 		}
 		children.removeAll(tempbtns);
 		tempbtns.removeAll(tempbtns);
-		System.out.println(values.size() + "dpng");
+		//System.out.println(values.size() + "dpng");
 		if(isopen)
 		{
 			btns.removeAll(tempbtns);
@@ -173,6 +172,10 @@ public class Dropboxng extends Widget
 			Button btn= null;
 			btn = new Button(x, y+i2*height, width, height, new StringTextComponent(values.get(i)), (b)->{
 				//System.out.println(currentint+ ":"+ b.getMessage().getString());
+				if(!isopen)
+				{
+					return;
+				}
 				currentint = values.indexOf(b.getMessage().getString());
 				//System.out.println(currentint);
 				//values.forEach((a)-> System.out.println(a));

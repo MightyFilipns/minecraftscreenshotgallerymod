@@ -97,8 +97,6 @@ public class GalleryGUI extends Screen {
 	
 	public void stop()
 	{
-		List<File> a = CacheManager.getfiles(dp1.getcurrentdate(), dp2.getcurrentdate());
-		System.out.println(a.size());
 		int aa = 0;
 		aa += aa;
 	}
@@ -114,8 +112,23 @@ public class GalleryGUI extends Screen {
 		scroll = Math.max(Math.min(scroll, scrollmaxvalue), 0);
 	}
 	
-	public boolean issortinghovered()
+	public void newimgs()
 	{
+		if(dp1.getcurrentdate().toEpochDay() > dp2.getcurrentdate().toEpochDay())
+		{
+			return;
+		}
+		List<File> a = CacheManager.getfiles(dp1.getcurrentdate(), dp2.getcurrentdate());
+		files= a.toArray(new File[0]);
+		scroll = 0;
+		dym.removeAll(dym);
+		renderd.removeAll(renderd);
+		calcscroll();
+		updateimgs();
+	}
+		
+	public boolean issortinghovered()
+	{	
 		if(sortdbox.isHovered() || sortboxtype.isHovered())
 		{
 			return true;
@@ -124,7 +137,7 @@ public class GalleryGUI extends Screen {
 	}
 	private boolean issortingopen()
 	{
-		if(sortdbox.getIsopen() || sortboxtype.getIsopen())
+		if(sortdbox.getIsopen() || sortboxtype.getIsopen() || dp1.isopen() || dp2.isopen())
 		{
 			return true;
 		}
@@ -139,6 +152,7 @@ public class GalleryGUI extends Screen {
 	}
 	public void resort()
 	{
+		newimgs();
 		List<File> tf = Arrays.asList(files);
 		tf.sort(new Comparator<File>() 
 		{
@@ -154,11 +168,11 @@ public class GalleryGUI extends Screen {
 				}
 				try 
 				{
-					long str = System.nanoTime();
+					//long str = System.nanoTime();
 					BasicFileAttributes bf1 = Files.readAttributes(o1.toPath(), BasicFileAttributes.class);
 					BasicFileAttributes bf2 = Files.readAttributes(o2.toPath(), BasicFileAttributes.class);
-					long str2 = System.nanoTime();
-					System.out.println(str2-str);
+					//long str2 = System.nanoTime();
+					//System.out.println(str2-str);
 					long v1 = 0;
 					long v2 = 0;
 					sorttype st = (sorttype) sortboxtype.getvalue();
@@ -183,7 +197,6 @@ public class GalleryGUI extends Screen {
 						default:
 							
 							break;
-						
 					}
 
 					if(v1 > v2)
@@ -227,7 +240,6 @@ public class GalleryGUI extends Screen {
 		        }
 		    }
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		return 0;
@@ -280,6 +292,7 @@ public class GalleryGUI extends Screen {
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) 
 	{
+		
 		if(lasthoverover > -1 && !editmode && files[lasthoverover] != null && !issortingopen())
 		{
 			editmode = true;
@@ -408,7 +421,13 @@ public class GalleryGUI extends Screen {
 		if(!editmode)
 		{
 			lasthoverover = -1;
-			drawCenteredString(pMatrixStack, font,"To", 125, 5, 0xFF_FF_FF_FF);
+			int tosw = 125;
+			if(width < 450)
+			{
+				int lefo = width-200;
+				tosw = lefo/2;
+			}
+			drawCenteredString(pMatrixStack, font,"To", tosw, 5, 0xFF_FF_FF_FF);
 		}
 		for (DynamicTexture item : dym) 
 		{
@@ -504,7 +523,11 @@ public class GalleryGUI extends Screen {
 		if(editmode)
 		{
 			buttons.remove(details);
+			children.remove(details);
+			details.active = false;
 			buttons.remove(filexp);
+			children.remove(filexp);
+			filexp.active = false;
 			editmode = false;
 			togglesortvisibility(true);
 			return false;
@@ -526,19 +549,33 @@ public class GalleryGUI extends Screen {
 		perrow = Math.max(1, Math.floorDiv(width, screenshotxsize));
 		leftover = width % screenshotxsize;
 		margin = (int) Math.floor(leftover / (perrow + 1));
-		files = screenshootdir.listFiles(ff);
-		sortdbox = new Dropbox<sortdir>(width-100, 0, 100, 20, sortdir.Descending, buttons, (a,b) -> {
+		//files = screenshootdir.listFiles(ff);
+		int dpw = 100;
+		if(width < 450)
+		{
+			int lefto = width-200;
+			int one5 = lefto/5;
+			dpw = one5*2;
+		}
+		sortdbox = new Dropbox<sortdir>(width-100, 0, 100, 20, sortdir.Ascending, buttons, (a,b) -> {
 			resort();
 		});
 		sortboxtype = new Dropbox<sorttype>(width-200, 0, 100, 20, sorttype.CreatedTime, buttons, (a,b) -> {
 			resort();
 		});
-		dp1 = new DatePicker(0, 0, 100, 20, LocalDate.of(2020, 10, 10), LocalDate.of(2022, 3, 1), LocalDate.of(2021, 2, 1), buttons,children);
-		dp2 = new DatePicker(150, 0, 100, 20, LocalDate.of(2020, 10, 10), LocalDate.of(2022, 10, 1), LocalDate.of(2021, 2, 1), buttons,children);
+		dp1 = new DatePicker(0, 0, dpw, 20, CacheManager.getearliestdate(), LocalDate.now(),CacheManager.getearliestdate(), buttons,children);
+		dp2 = new DatePicker((int)(dpw*1.5f), 0, dpw, 20, CacheManager.getearliestdate(), LocalDate.now(), LocalDate.now(), buttons,children);
 		this.addButton(dp1);
 		this.addButton(dp2);
 		this.addButton(sortdbox);
 		this.addButton(sortboxtype);
+		dp1.setOnchange((a)->{
+			newimgs();
+		});
+		dp2.setOnchange((a)->{
+			newimgs();
+		});
+		newimgs();
 		resort();
 		updateimgs();
 	}
@@ -679,7 +716,8 @@ public class GalleryGUI extends Screen {
 	}
 
 	public DynamicTexture loadimgresized(File img) {
-		NativeImage nativeimage = null;
+		return CacheManager.gethumbnail(img.getName());
+		/*NativeImage nativeimage = null;
 		//long start = System.currentTimeMillis();
 		try (InputStream inputstream = new FileInputStream(img.getAbsoluteFile())) {
 			nativeimage = NativeImage.read(inputstream);
@@ -700,7 +738,7 @@ public class GalleryGUI extends Screen {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return null;*/
 	}
 
 	public DynamicTexture loadimg(File img) {
@@ -715,7 +753,6 @@ public class GalleryGUI extends Screen {
 		}
 		return null;
 	}
-	
 	
 	private static NativeImage resize(int width, int height, NativeImage org) {
 		NativeImage img = new NativeImage(width, height, false);

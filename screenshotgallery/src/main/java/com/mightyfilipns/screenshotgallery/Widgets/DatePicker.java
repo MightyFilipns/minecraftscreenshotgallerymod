@@ -3,6 +3,7 @@ package com.mightyfilipns.screenshotgallery.Widgets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 
@@ -23,6 +24,8 @@ public class DatePicker extends Widget
 	List<String> months = new ArrayList<String>();
 	List<String> years = new ArrayList<String>();
 	List<Dropboxng> dngs = new ArrayList<Dropboxng>();
+	Consumer<DatePicker> onchange = null;
+
 	public DatePicker(int pX, int pY, int pWidth, int pHeight,LocalDate mindate,LocalDate maxdate,LocalDate currentdate,List<Widget> btns,List<IGuiEventListener> _children) 
 	{
 		super(pX, pY, pWidth, pHeight, new StringTextComponent(""));
@@ -36,42 +39,50 @@ public class DatePicker extends Widget
 			setMessage(new StringTextComponent("Invalid Parameters"));
 			return;
 		}
+		System.out.println(mindate);
 		recalcdate();
 		System.out.println("days: "+ days.size()+" months: " +months.size()+ "years: " +years.size());
 		day = new Dropboxng(pX, pY, pWidth/3, pHeight, initaldate.getDayOfMonth()-1, days, buttons,children, (a,b)->{
-			System.out.println("day changed to " + days.get(b));
+			//System.out.println("day changed to " + days.get(b));
 			initaldate = LocalDate.of(initaldate.getYear(),initaldate.getMonth(), Integer.parseInt(days.get(b)));
-			checkdates();
-			recalcdate();
-			updatedates();
+			onchange();
 		});
 		month = new Dropboxng(pX+(pWidth/3), pY, pWidth/3, pHeight, initaldate.getMonthValue()-1, months, buttons,children, (a,b)->{
-			System.out.println("month changed to " + months.get(b));
+			//System.out.println("month changed to " + months.get(b));
 			initaldate = LocalDate.of(initaldate.getYear(),Integer.parseInt(months.get(b)), initaldate.getDayOfMonth());
-			checkdates();
-			recalcdate();
-			updatedates();
+			onchange();
 		});
 		year = new Dropboxng(pX+((pWidth/3)*2), pY, pWidth/3, pHeight, initaldate.minusYears(_mindate.getYear()).getYear(), years, buttons,children, (a,b)->{
-			System.out.println("year changed to " + years.get(b));
+			//System.out.println("year changed to " + years.get(b));
 			initaldate = LocalDate.of(Integer.parseInt(years.get(b)),initaldate.getMonth(), initaldate.getDayOfMonth());
-			checkdates();
-			recalcdate();
-			updatedates();
+			onchange();
 		});
 		dngs.add(day);
 		dngs.add(month);
 		dngs.add(year);
 		for (Dropboxng widget : dngs) 
 		{
-			widget.prereq = (a)->{
-				closeall(a);
-				return true;
+			widget.prereq = (a)->{;
+				return areallclosed();
 			};
 			buttons.add(widget);
 			children.add(widget);
 		}
 		visible = false;
+	}
+	public void setOnchange(Consumer<DatePicker> onchange) 
+	{
+		this.onchange = onchange;
+	}
+	private void onchange()
+	{
+		checkdates();
+		recalcdate();
+		updatedates();
+		if(onchange != null)
+		{
+			onchange.accept(this);			
+		}
 	}
 	public boolean isopen()
 	{

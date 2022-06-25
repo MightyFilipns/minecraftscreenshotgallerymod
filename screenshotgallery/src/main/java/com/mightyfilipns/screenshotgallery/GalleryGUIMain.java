@@ -6,6 +6,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.GuiScreenEvent.KeyboardKeyEvent;
 import net.minecraftforge.client.event.ScreenshotEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -16,11 +17,14 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.server.command.ConfigCommand;
 
 import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import commands.GalleryCacheRefresh;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(GalleryGUIMain.modid)
@@ -41,7 +45,6 @@ public class GalleryGUIMain
         // Register the doClientStuff method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
         
-
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -52,8 +55,8 @@ public class GalleryGUIMain
     	try {
 			CacheManager.buildcache();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			LOGGER.info("Building cache falied");
 		}
     }
     private void doClientStuff(final FMLClientSetupEvent event) {
@@ -74,6 +77,12 @@ public class GalleryGUIMain
                 map(m->m.getMessageSupplier().get()).
                 collect(Collectors.toList()));*/
     }
+    @SubscribeEvent
+    public void Cmdreg(RegisterCommandsEvent event)
+    {
+    	new GalleryCacheRefresh(event.getDispatcher());
+    	ConfigCommand.register(event.getDispatcher());
+    }
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(FMLServerStartingEvent event) {
@@ -83,7 +92,7 @@ public class GalleryGUIMain
     @SubscribeEvent
     public void screenshot(ScreenshotEvent event)
     {
-    	
+    	CacheManager.addsc(event);
     }
     
     @SubscribeEvent
@@ -91,19 +100,16 @@ public class GalleryGUIMain
     {
     	if(e.getKeyCode() == 65)
     	{
-    		GalleryGUI.ins.stop();    		
+    		GalleryGUI.ins.stop();	
     	}
     }
     @SubscribeEvent
     public void tick(ClientTickEvent event)
     {
-    	
     	if(kb.isDown() && INSTANCE.screen == null)
     	{
-    		INSTANCE.setScreen(new GalleryGUI());	
+    		INSTANCE.setScreen(new GalleryGUI());
     	}
-
-    	
     }
 
     // You can use EventBusSubscriber to automatically subscribe events on the contained class (this is subscribing to the MOD

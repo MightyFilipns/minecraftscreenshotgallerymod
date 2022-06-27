@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.mightyfilipns.screenshotgallery.StaticFunctions;
-
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.util.text.StringTextComponent;
@@ -41,12 +39,12 @@ public class DatePicker extends Widget
 		//System.out.println(mindate);
 		recalcdate();
 		//System.out.println("days: "+ days.size()+" months: " +months.size()+ "years: " +years.size());
-		day = new Dropboxng(pX, pY, pWidth/3, pHeight, initaldate.getDayOfMonth()-1, days, buttons,children, (a,b)->{
+		day = new Dropboxng(pX, pY, pWidth/3, pHeight, initaldate.getDayOfMonth()-Integer.parseInt(days.get(0)), days, buttons,children, (a,b)->{
 			//System.out.println("day changed to " + days.get(b));
 			initaldate = LocalDate.of(initaldate.getYear(),initaldate.getMonth(), Integer.parseInt(days.get(b)));
 			onchange();
 		});
-		month = new Dropboxng(pX+(pWidth/3), pY, pWidth/3, pHeight, initaldate.getMonthValue()-1, months, buttons,children, (a,b)->{
+		month = new Dropboxng(pX+(pWidth/3), pY, pWidth/3, pHeight, initaldate.getMonthValue()-Integer.parseInt(months.get(0)), months, buttons,children, (a,b)->{
 			//System.out.println("month changed to " + months.get(b));
 			initaldate = LocalDate.of(initaldate.getYear(),Integer.parseInt(months.get(b)), initaldate.getDayOfMonth());
 			onchange();

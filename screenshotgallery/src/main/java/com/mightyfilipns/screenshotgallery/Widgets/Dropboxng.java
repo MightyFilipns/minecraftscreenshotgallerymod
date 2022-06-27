@@ -6,6 +6,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.widget.Widget;
@@ -27,6 +29,7 @@ public class Dropboxng extends Widget
 	int scroll = 0;
 	Function<Dropboxng, Boolean> prereq = null;
 	Minecraft INSTANCE = Minecraft.getInstance();
+	boolean remove = false;
 	public Dropboxng(int pX, int pY, int pWidth, int pHeight,int defaultvalue,List<String> _values,List<Widget> buttons,List<IGuiEventListener> _children, BiConsumer<Widget,Integer> _onchange)
 	{
 		super(pX, pY, pWidth, pHeight, new StringTextComponent(""));
@@ -55,21 +58,25 @@ public class Dropboxng extends Widget
 		tempbtns.removeAll(tempbtns);
 		isopen= false;
 	}
-
-	// mouseClicked and onClick are required for some reason
+	@Override
+	public void render(MatrixStack pMatrixStack, int pMouseX, int pMouseY, float pPartialTicks) {
+		
+		if(remove)
+		{
+			children.removeAll(tempbtns);
+			btns.removeAll(tempbtns);
+			tempbtns.clear();
+			isopen = false;
+			remove = false;
+		}
+		super.render(pMatrixStack, pMouseX, pMouseY, pPartialTicks);
+	}
 	@Override
 	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton)
 	{
 		if(pMouseY< y|| y+(height*values.size())< pMouseY && pMouseX< x || x+width < pMouseX)
 		{
-			btns.removeAll(tempbtns);
-			tempbtns.forEach((a)->{
-				a.visible = false;
-				a.active = false;
-			});
-			isopen= false;
-			btns.removeAll(tempbtns);
-			tempbtns.removeAll(tempbtns);
+			remove = true;
 		}
 		//System.out.println(values.size() + "dpng");
 		//children.removeAll(tempbtns);
@@ -138,6 +145,7 @@ public class Dropboxng extends Widget
 		{
 			return;
 		}
+		btns.removeAll(tempbtns);
 		children.removeAll(tempbtns);
 		tempbtns.removeAll(tempbtns);
 		//System.out.println(values.size() + "dpng");

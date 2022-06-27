@@ -37,7 +37,8 @@ import net.minecraft.util.text.StringTextComponent;
 
 public class GalleryGUI extends Screen {
 	private static final Minecraft INSTANCE = Minecraft.getInstance();
-	public static DynamicTexture whiteimg = new DynamicTexture(whitesq(10, 10));
+	public static DynamicTexture whiteimg = new DynamicTexture(whitesq(10, 10,0xFF_FF_FF_FF));
+	public static DynamicTexture graybar = new DynamicTexture(whitesq(10, 10,0x0F_FF_FF_FF));
 	List<DynamicTexture> dym = new ArrayList<>();
 	List<Integer> torender = new ArrayList<>();
 	List<Integer> renderd = new ArrayList<>();
@@ -329,9 +330,12 @@ public class GalleryGUI extends Screen {
 		this.renderBackground(pMatrixStack);
 		int pos1 = 0;
 		int pos2 = 0;
-		if(files == null && files.length == 0)
+		//System.out.println(CacheManager.iscach.get());
+		
+		if(files == null || files.length == 0)
 		{
 			drawCenteredString(pMatrixStack, this.font, new StringTextComponent("No Screenshots found"), width/2, height/2, 0xff_ff_ff_ff);
+			togglesortvisibility(false);
 		}
 		if(editmode)
 		{
@@ -410,7 +414,7 @@ public class GalleryGUI extends Screen {
 			updateimgs();
 			pos2 = renderd.get(0)/perrow;
 		}
-		if(!editmode)
+		if(!editmode && files != null && files.length != 0)
 		{
 			lasthoverover = -1;
 			int tosw = 125;
@@ -421,78 +425,79 @@ public class GalleryGUI extends Screen {
 			}
 			drawCenteredString(pMatrixStack, font,"To", tosw, 5, 0xFF_FF_FF_FF);
 		}
-		for (DynamicTexture item : dym)
+		if(!editmode && !CacheManager.iscach.get())
 		{
-			if(editmode)
+			for (DynamicTexture item : dym)
 			{
-				break;
-			}
-			if (pos1 == perrow) {
-				pos1 = 0;
-				pos2++;
-			}
-			if(item != null)
-			{
-				final float ratio = screenshotxsize/(float)(screenshotysize);
 
-				int imgh =screenshotysize;
-				int imgw = screenshotxsize;
-
-				NativeImage chosen = item.getPixels();
-
-				int chosenw = chosen.getWidth();
-				int chosenh = chosen.getHeight();
-
-				int min = Math.min(imgw, imgh);
-
-				if(chosenw < chosenh)
+				if (pos1 == perrow) {
+					pos1 = 0;
+					pos2++;
+				}
+				if(item != null)
 				{
-					imgw = (int) (imgh/ratio);
-					if(imgw > screenshotxsize)
+					final float ratio = screenshotxsize/(float)(screenshotysize);
+
+					int imgh =screenshotysize;
+					int imgw = screenshotxsize;
+
+					NativeImage chosen = item.getPixels();
+
+					int chosenw = chosen.getWidth();
+					int chosenh = chosen.getHeight();
+
+					int min = Math.min(imgw, imgh);
+
+					if(chosenw < chosenh)
 					{
-						imgw = screenshotxsize;
-						imgh = (int) (imgw*ratio);
+						imgw = (int) (imgh/ratio);
+						if(imgw > screenshotxsize)
+						{
+							imgw = screenshotxsize;
+							imgh = (int) (imgw*ratio);
+						}
+					}
+					if(chosenw > chosenh)
+					{
+						imgh = (int) (imgw/ratio);
+						if(imgh > 112)
+						{
+							imgh = 112;
+							imgw = (int) (imgh*ratio);
+						}
+					}
+					if(chosenw == chosenh)
+					{
+						imgh = min;
+						imgw = min;
+					}
+
+					int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize))+Math.max(0, screenshotxsize-imgw)/2;
+					int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll)+20;
+					item.bind();
+					blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
+					if(StaticFunctions.iswithin(pMouseY, y, y+imgh) && StaticFunctions.iswithin(pMouseX, x, x+imgw) && !issortingopen() && !issortinghovered())
+					{
+						whiteimg.bind();
+						blit(pMatrixStack,x,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
+						blit(pMatrixStack,x,y,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
+						blit(pMatrixStack,x+imgw-hoverborder,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
+						blit(pMatrixStack,x,y+imgh-hoverborder,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
+						lasthoverover = pos2*perrow+pos1;
 					}
 				}
-				if(chosenw > chosenh)
+				else
 				{
-					imgh = (int) (imgw/ratio);
-					if(imgh > 112)
+					if(pos2*perrow+pos1 <= files.length-1)
 					{
-						imgh = 112;
-						imgw = (int) (imgh*ratio);
+						int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize));
+						int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll);
+						drawCenteredString(pMatrixStack, this.font, "Error Encountered" , x+(screenshotxsize/2), y+(screenshotysize/2)-10, 0xFF_FF_FF_FF);
+						drawCenteredString(pMatrixStack, this.font, "Try running /galleryrefreshcache" , x+(screenshotxsize/2), y+(screenshotysize/2)+10, 0xFF_FF_FF_FF);
 					}
 				}
-				if(chosenw == chosenh)
-				{
-					imgh = min;
-					imgw = min;
-				}
-
-				int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize))+Math.max(0, screenshotxsize-imgw)/2;
-				int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll)+20;
-				item.bind();
-				blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
-				if(StaticFunctions.iswithin(pMouseY, y, y+imgh) && StaticFunctions.iswithin(pMouseX, x, x+imgw) && !issortingopen() && !issortinghovered())
-				{
-					whiteimg.bind();
-					blit(pMatrixStack,x,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
-					blit(pMatrixStack,x,y,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
-					blit(pMatrixStack,x+imgw-hoverborder,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
-					blit(pMatrixStack,x,y+imgh-hoverborder,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
-					lasthoverover = pos2*perrow+pos1;
-				}
+				pos1++;
 			}
-			else
-			{
-				if(pos2*perrow+pos1 <= files.length-1)
-				{
-					int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize));
-					int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll);
-					drawString(pMatrixStack, this.font, "Error Encountered" , x, y, 0xFF_FF_FF_FF);
-				}
-			}
-			pos1++;
 		}
 		if(scrollmaxvalue > 0 && !editmode)
 		{
@@ -597,7 +602,6 @@ public class GalleryGUI extends Screen {
 		int scrolleff = (int) Math.floor(scroll / a);
 		try
 		{
-			long str = System.nanoTime();
 			if((double)scroll%(double)a <= 10)
 			{
 				visible+=perrow;
@@ -627,7 +631,7 @@ public class GalleryGUI extends Screen {
 				}
 				renderd = new ArrayList<>(torender);
 				//System.out.println("initial");
-				System.out.println(str-System.nanoTime());
+				//System.out.println(str-System.nanoTime());
 				return;
 			}
 			if (torender.get(0).equals(renderd.get(0))) {
@@ -650,7 +654,7 @@ public class GalleryGUI extends Screen {
 					dym.add(loadimgresized(files[torender.get(i)]));
 				}
 				renderd = new ArrayList<>(torender);
-				System.out.println((System.nanoTime()-str)/1000000f);
+				//System.out.println((System.nanoTime()-str)/1000000f);
 				return;
 			}/*
 			// scroll down
@@ -834,14 +838,14 @@ public class GalleryGUI extends Screen {
 		}
 		return toget.get(toget.size()-1);
 	}
-	static NativeImage whitesq(int x,int y)
+	static NativeImage whitesq(int x,int y, int argbcolor)
 	{
 		NativeImage ni = new NativeImage(PixelFormat.RGBA,x,y,false);
 		for (int i = 0; i < x; i++)
 		{
 			for (int j = 0; j < y; j++)
 			{
-				ni.setPixelRGBA(i, j, -1);
+				ni.setPixelRGBA(i, j, argbcolor);
 			}
 		}
 		return ni;

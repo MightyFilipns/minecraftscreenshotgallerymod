@@ -19,7 +19,6 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.server.command.ConfigCommand;
 
-import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,12 +51,7 @@ public class GalleryGUIMain
     private void setup(final FMLCommonSetupEvent event)
     {
     	LOGGER.info("Building cache");
-    	try {
-			CacheManager.buildcache();
-		} catch (IOException e) {
-			e.printStackTrace();
-			LOGGER.info("Building cache falied");
-		}
+    	CacheManager.buildcache(false);
     }
     private void doClientStuff(final FMLClientSetupEvent event) {
         // do something that can only be done on the client

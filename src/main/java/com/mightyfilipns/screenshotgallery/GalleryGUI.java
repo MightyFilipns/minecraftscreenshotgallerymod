@@ -115,7 +115,7 @@ public class GalleryGUI extends Screen {
 		scroll = Math.max(Math.min(scroll, scrollmaxvalue), 0);
 	}
 
-	public void newimgs()
+	public void filterdate()
 	{
 		if(dp1.getcurrentdate().toEpochDay() < dp2.getcurrentdate().toEpochDay())
 		{
@@ -129,6 +129,7 @@ public class GalleryGUI extends Screen {
 		scroll = 0;
 		dym.clear();
 		renderd.clear();
+		resort();
 		calcscroll();
 		updateimgs();
 	}
@@ -158,7 +159,6 @@ public class GalleryGUI extends Screen {
 	}
 	public void resort()
 	{
-		newimgs();
 		List<File> tf = Arrays.asList(files);
 		tf.sort(new Comparator<File>()
 		{
@@ -538,7 +538,8 @@ public class GalleryGUI extends Screen {
 		}
 		if(scrollmaxvalue > 0 && !editmode)
 		{
-			this.minecraft.getTextureManager().bindForSetup(sliders);
+			//this.minecraft.getTextureManager().bindForSetup(sliders);
+			RenderSystem.setShaderTexture(0, sliders);
 			int x = width-12;
 			float scrollp = (float)scroll/((float)scrollmaxvalue);
 			int y = (int) (scrollp*(height-15));
@@ -601,17 +602,17 @@ public class GalleryGUI extends Screen {
 		sortboxtype = new Dropbox<>(width-200-12, 0, 100, 20, sorttype.CreatedTime, lst, (a,b) -> {
 			resort();
 		},this);
-		dp1 = new DatePicker(0, 0, dpw, 20, CacheManager.getearliestdate(), LocalDate.now(),CacheManager.getearliestdate(),lst,this);
-		dp2 = new DatePicker((int)(dpw*1.5f), 0, dpw, 20, CacheManager.getearliestdate(), LocalDate.now(), LocalDate.now(),lst,this);
+		dp1 = new DatePicker(0, 0, dpw, 20, CacheManager.getearliestdate(), CacheManager.getlatestdate(),CacheManager.getearliestdate(),lst,this);
+		dp2 = new DatePicker((int)(dpw*1.5f), 0, dpw, 20, CacheManager.getearliestdate(), CacheManager.getlatestdate(), CacheManager.getlatestdate(),lst,this);
 		this.addRenderableWidget(sortdbox);
 		this.addRenderableWidget(sortboxtype);
 		dp1.setOnchange((a)->{
-			newimgs();
+			filterdate();
 		});
 		dp2.setOnchange((a)->{
-			newimgs();
+			filterdate();
 		});
-		newimgs();
+		filterdate();
 		resort();
 		updateimgs();
 	}

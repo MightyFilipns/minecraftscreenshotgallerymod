@@ -104,6 +104,7 @@ public class Dropbox<T extends Enum<T>> extends AbstractWidget
 					{
 						current = (Enum<T>) object;
 						btn1.setMessage(Component.literal(current.name()));
+						onchangee.accept(this, current);
 						break;
 					}
 				}

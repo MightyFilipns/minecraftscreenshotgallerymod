@@ -85,6 +85,14 @@ public class CacheManager
 		}
 		return imgd.get(0).createdtime;
 	}
+	public static LocalDate getlatestdate()
+	{
+		if(imgd.size() == 0)
+		{
+			return LocalDate.now();
+		}
+		return imgd.get(imgd.size()-1).createdtime;
+	}
 	public static void buildcache(boolean onlyaddnew,boolean initial)
 	{
 		new Thread(new Runnable() {

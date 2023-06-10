@@ -1,6 +1,7 @@
 package com.mightyfilipns.screenshotgallery.Widgets;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,19 @@ public class DatePicker extends AbstractWidget
 		},scr);
 		month = new Dropboxng(pX+(pWidth/3), pY, pWidth/3, pHeight, initaldate.getMonthValue()-Integer.parseInt(months.get(0)), months,children, (a,b)->{
 			//System.out.println("month changed to " + months.get(b));
-			initaldate = LocalDate.of(initaldate.getYear(),Integer.parseInt(months.get(b)), initaldate.getDayOfMonth());
+			//if the month is changed and the day selected doesnt exist in the new month the last day of the new month is selected preventing a crash
+			
+			int newday = 1;
+			LocalDate ld1 = LocalDate.of(initaldate.getYear(), Integer.parseInt(months.get(b)), 1);
+			if(ld1.lengthOfMonth() < initaldate.getDayOfMonth())
+			{
+				newday = ld1.lengthOfMonth();
+			}
+			else
+			{
+				newday = initaldate.getDayOfMonth();
+			}
+			initaldate = LocalDate.of(initaldate.getYear(),Integer.parseInt(months.get(b)), newday);
 			onchange();
 		},scr);
 		year = new Dropboxng(pX+((pWidth/3)*2), pY, pWidth/3, pHeight, initaldate.minusYears(_mindate.getYear()).getYear(), years,children, (a,b)->{
@@ -185,9 +198,6 @@ public class DatePicker extends AbstractWidget
 			days.add(Integer.toString(ld.getDayOfMonth()));
 		}
 		
-		
-		
-		
 		/*
 		int yearsc = _maxdate.minusYears(_mindate.getYear()).getYear()+1;
 		for (int i = 0; i < yearsc; i++)
@@ -305,7 +315,7 @@ public class DatePicker extends AbstractWidget
 	}
 	public void checkdates()
 	{
-		if(_mindate.toEpochDay()> initaldate.toEpochDay())
+		if(_mindate.toEpochDay() > initaldate.toEpochDay())
 		{
 			initaldate = _mindate.plusDays(0);
 		}

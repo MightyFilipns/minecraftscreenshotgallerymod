@@ -1,6 +1,10 @@
 package com.mightyfilipns.screenshotgallery;
 
 import java.time.LocalDate;
+import java.util.List;
+
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.platform.NativeImage.Format;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -54,5 +58,25 @@ public class StaticFunctions
 		{
 			return d1;
 		}
+	}
+	public static <T> T getlast(List<T> toget)
+	{
+		if(toget == null || toget.size() == 0)
+		{
+			return null;
+		}
+		return toget.get(toget.size()-1);
+	}
+	public static NativeImage whitesq(int x,int y, int argbcolor)
+	{
+		NativeImage ni = new NativeImage(Format.RGBA,x,y,false);
+		for (int i = 0; i < x; i++)
+		{
+			for (int j = 0; j < y; j++)
+			{
+				ni.setPixelRGBA(i, j, argbcolor);
+			}
+		}
+		return ni;
 	}
 }

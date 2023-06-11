@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,9 +22,7 @@ import javax.imageio.stream.ImageInputStream;
 
 import com.mightyfilipns.screenshotgallery.Widgets.DatePicker;
 import com.mightyfilipns.screenshotgallery.Widgets.Dropbox;
-
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.platform.NativeImage.Format;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -42,8 +41,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class GalleryGUI extends Screen {
 	private static final Minecraft INSTANCE = Minecraft.getInstance();
 	TextureManager tm = INSTANCE.getTextureManager();
-	public static DynamicTexture whiteimg = new DynamicTexture(whitesq(10, 10,0xFF_FF_FF_FF));
-	public static DynamicTexture graybar = new DynamicTexture(whitesq(10, 10,0x0F_FF_FF_FF));
+	public static DynamicTexture whiteimg = new DynamicTexture(StaticFunctions.whitesq(10, 10,0xFF_FF_FF_FF));
+	public static DynamicTexture graybar = new DynamicTexture(StaticFunctions.whitesq(10, 10,0x0F_FF_FF_FF));
 	ResourceLocation rlwimng = tm.register("whiteimg", whiteimg);
 	List<DynamicTexture> dym = new ArrayList<>();
 	List<Integer> torender = new ArrayList<>();
@@ -97,11 +96,6 @@ public class GalleryGUI extends Screen {
 		height,
 	}
 
-	public void stop()
-	{
-		int aa = 0;
-		aa += aa;
-	}
 	protected GalleryGUI() {
 		super(Component.literal("Screenshot gallery"));
 		ins = this;
@@ -216,7 +210,14 @@ public class GalleryGUI extends Screen {
 					{
 						return 0;
 					}
-				} catch (IOException e) {
+				} catch (NoSuchFileException e) {
+					if(!o1.exists()) 
+					{
+						
+					}
+				}
+				catch (IOException e) 
+				{
 					e.printStackTrace();
 				}
 				return 0;
@@ -299,26 +300,23 @@ public class GalleryGUI extends Screen {
 		
 		if(lasthoverover > -1 && !editmode && files[lasthoverover] != null && !issortingopen() && !issortinghovered())
 		{
-			editmode = true;
 			chosen = loadimg(files[lasthoverover]);
+			if(chosen == null)
+			{
+				return super.mouseClicked(pMouseX, pMouseY, pButton);
+			}
+			editmode = true;
 			rlmainimg = tm.register("mainimg", chosen);
 			filexp = Button.builder(Component.literal("Open in default image viewer"), (a) -> {
 				Util.getPlatform().openFile(files[lasthoverover]);
 		     }).bounds(this.width / 2 - 150, this.height-20, 150, 20).build();
 			this.addRenderableWidget(filexp);
-			/*filexp = new Button(this.width / 2 - 150, this.height-20, 150, 20, Component.literal("Open in default image viewer"), (a) -> {
-				Util.getPlatform().openFile(files[lasthoverover]);
-		     });*/
 			
 			details = Button.builder(Component.literal("More details"), (a) ->
 			{
 				detailsopen = true;
 		     }).bounds(this.width / 2, this.height-20, 150, 20).build();
 			this.addRenderableWidget(details);
-			/*details = new Button(this.width / 2, this.height-20, 150, 20, new StringTextComponent("More details"), (a) ->
-			{
-				detailsopen = true;
-		     });*/
 			
 			try {
 				attr = Files.readAttributes(files[lasthoverover].toPath(), BasicFileAttributes.class);
@@ -338,7 +336,6 @@ public class GalleryGUI extends Screen {
 			}
 			togglesortvisibility(false);
 		}
-		//StaticFunctions.playDownSound();
 		return super.mouseClicked(pMouseX, pMouseY, pButton);
 	}
 	
@@ -353,7 +350,6 @@ public class GalleryGUI extends Screen {
 		this.renderBackground(pMatrixStack);
 		int pos1 = 0;
 		int pos2 = 0;
-		//System.out.println(CacheManager.iscach.get());
 		
 		if(files == null || files.length == 0)
 		{
@@ -410,9 +406,6 @@ public class GalleryGUI extends Screen {
 				m3 = height/2-imgh/2;
 			}
 
-
-			//chosen.bind();
-			//ResourceLocation rlm = tm.register("mainimg", chosen);
 			RenderSystem.setShaderTexture(0, rlmainimg);
 			blit(pMatrixStack,m2,m3,imgw,imgh, 0, 0,1,1,1,1);
 			if(attr != null && detailsopen)
@@ -506,14 +499,11 @@ public class GalleryGUI extends Screen {
 
 					int x = (margin * (pos1 + 1) + (pos1 * screenshotxsize))+Math.max(0, screenshotxsize-imgw)/2;
 					int y = (margin * (pos2 + 1) + (screenshotysize * pos2) - scroll)+20;
-					//item.bind();
-					//item.upload();
 					ResourceLocation rl = tm.register("empty", item);
 					RenderSystem.setShaderTexture(0, rl);
 					blit(pMatrixStack,x,y,imgw, imgh, 0, 0, 1, 1, 1, 1);
 					if(StaticFunctions.iswithin(pMouseY, y, y+imgh) && StaticFunctions.iswithin(pMouseX, x, x+imgw) && !issortingopen() && !issortinghovered())
 					{
-						//whiteimg.bind();
 						RenderSystem.setShaderTexture(0, rlwimng);
 						blit(pMatrixStack,x,y,hoverborder,imgh,0 , 0, 1, 1, 1, 1);
 						blit(pMatrixStack,x,y,imgw,hoverborder,0 , 0, 1, 1, 1, 1);
@@ -537,7 +527,6 @@ public class GalleryGUI extends Screen {
 		}
 		if(scrollmaxvalue > 0 && !editmode)
 		{
-			//this.minecraft.getTextureManager().bindForSetup(sliders);
 			RenderSystem.setShaderTexture(0, sliders);
 			int x = width-12;
 			float scrollp = (float)scroll/((float)scrollmaxvalue);
@@ -556,12 +545,8 @@ public class GalleryGUI extends Screen {
 		}
 		if(editmode)
 		{
-			//buttons.remove(details);
-			//children.remove(details);
 			removeWidget(details);
 			details.active = false;
-			//buttons.remove(filexp);
-			//children.remove(filexp);
 			removeWidget(filexp);
 			filexp.active = false;
 			editmode = false;
@@ -571,10 +556,6 @@ public class GalleryGUI extends Screen {
 		return true;
 	}
 
-	@Override
-	public boolean isPauseScreen() {
-		return true;
-	}
 	@Override
 	protected void init() {
 		super.init();
@@ -651,8 +632,6 @@ public class GalleryGUI extends Screen {
 				}
 				torender.add(i + (scrolleff * perrow));
 			}
-			//System.out.println(String.format("Visible:%s V1:%s scroleff:%S perrow:%s torender0:%s rendered0:%S",visible,v1,scrolleff,perrow,(torender.size() != 0 ? torender.get(0) : -1),(renderd.size() != 0 ? renderd.get(0) : -1)));
-			//System.out.println(torender);
 			if (renderd.size() == 0)
 			{
 				int tol = Math.min(files.length, torender.size());
@@ -664,7 +643,7 @@ public class GalleryGUI extends Screen {
 						dym.add(null);
 						continue;
 					}
-					dym.add(loadimgresized(files[torender.get(i)]));
+					dym.add(CacheManager.gethumbnail((files[torender.get(i)]).getName()));
 				}
 				renderd = new ArrayList<>(torender);
 				//System.out.println("initial");
@@ -688,7 +667,7 @@ public class GalleryGUI extends Screen {
 						dym.add(null);
 						continue;
 					}
-					dym.add(loadimgresized(files[torender.get(i)]));
+					dym.add(CacheManager.gethumbnail((files[torender.get(i)].getName())));
 				}
 				renderd = new ArrayList<>(torender);
 				//System.out.println((System.nanoTime()-str)/1000000f);
@@ -814,32 +793,6 @@ public class GalleryGUI extends Screen {
 
 	}
 
-	public DynamicTexture loadimgresized(File img) {
-		return CacheManager.gethumbnail(img.getName());
-		/*NativeImage nativeimage = null;
-		//long start = System.currentTimeMillis();
-		try (InputStream inputstream = new FileInputStream(img.getAbsoluteFile())) {
-			nativeimage = NativeImage.read(inputstream);
-			//System.out.println(System.currentTimeMillis()-start+" load");
-			int x = width/perrow;
-			int y = x;
-			if((float)nativeimage.getWidth()/(float)nativeimage.getHeight() != 0)
-			{
-				y /= (float)nativeimage.getWidth()/(float)nativeimage.getHeight();
-			}
-
-
-			nativeimage = resize(x, y, nativeimage);
-			//System.out.println(System.currentTimeMillis()-start+" full");
-			return new DynamicTexture(nativeimage);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;*/
-	}
-
 	public DynamicTexture loadimg(File img) {
 		NativeImage nativeimage = null;
 		try (InputStream inputstream = new FileInputStream(img.getAbsoluteFile())) {
@@ -853,47 +806,8 @@ public class GalleryGUI extends Screen {
 		return null;
 	}
 
-	/*private static NativeImage resize(int width, int height, NativeImage org) {
-		NativeImage img = new NativeImage(width, height, false);
-		double x_ratio = org.getWidth() / (double) width;
-		double y_ratio = org.getHeight() / (double) height;
-		double px, py;
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++) {
-				px = Math.floor(j * x_ratio);
-				py = Math.floor(i * y_ratio);
-				img.setPixelRGBA(j, i, org.getPixelRGBA((int) px, (int) py));
-			}
-		}
-		return img;
-	}*/
-	static <T> T getlast(List<T> toget)
-	{
-		if(toget == null || toget.size() == 0)
-		{
-			return null;
-		}
-		return toget.get(toget.size()-1);
+	@Override
+	public boolean isPauseScreen() {
+		return true;
 	}
-	static NativeImage whitesq(int x,int y, int argbcolor)
-	{
-		NativeImage ni = new NativeImage(Format.RGBA,x,y,false);
-		for (int i = 0; i < x; i++)
-		{
-			for (int j = 0; j < y; j++)
-			{
-				ni.setPixelRGBA(i, j, argbcolor);
-			}
-		}
-		return ni;
-	}
-	/*
-	public static void open()
-	{
-	    KeyBinding kb =  new KeyBinding("Open Gallery", 71 , "Gallery Mod");
-    	if(kb.isDown() && INSTANCE.screen == null)
-    	{
-    		INSTANCE.setScreen(new GalleryGUI());
-    	}
-	}*/
 }

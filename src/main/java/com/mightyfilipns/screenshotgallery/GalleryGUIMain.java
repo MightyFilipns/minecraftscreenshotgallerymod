@@ -2,7 +2,6 @@ package com.mightyfilipns.screenshotgallery;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.client.event.InputEvent.Key;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.ScreenshotEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -48,12 +47,14 @@ public class GalleryGUIMain
     KeyMapping kb =  new KeyMapping("Open Gallery", 71 , "Gallery Mod");
     private void setup(final FMLCommonSetupEvent event)
     {
-    	LOGGER.info("Building cache");
-    	CacheManager.buildcache(false,true);
+
     }
     private void doClientStuff(final FMLClientSetupEvent event) {
         // do something that can only be done on the client
         //LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().options);
+    	LOGGER.info("Building cache");
+    	CacheManager.buildcache(false,true);
+    	CacheManager.checkcache();
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event)
@@ -87,14 +88,6 @@ public class GalleryGUIMain
     	event.register(kb);
     }
     
-    @SubscribeEvent
-    public void keyb(Key e)
-    {
-    	if(e.getKey() == 65 && INSTANCE.screen instanceof GalleryGUI)
-    	{
-    		GalleryGUI.ins.stop();	
-    	}
-    }
     @SubscribeEvent
     public void tick(ClientTickEvent event)
     {

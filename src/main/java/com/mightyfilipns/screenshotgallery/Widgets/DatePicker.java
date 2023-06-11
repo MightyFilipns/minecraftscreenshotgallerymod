@@ -83,6 +83,7 @@ public class DatePicker extends AbstractWidget
 		dngs.add(day);
 		dngs.add(month);
 		dngs.add(year);
+		lst.addAll(dngs);
 		for (Dropboxng widget : dngs)
 		{
 			widget.prereq = (a)->{
@@ -150,8 +151,15 @@ public class DatePicker extends AbstractWidget
 		days.removeAll(days);
 		months.removeAll(months);
 		years.removeAll(years);
-		
-		List<LocalDate> ydl = _mindate.datesUntil(_maxdate, Period.ofYears(1)).collect(Collectors.toList());
+		List<LocalDate> ydl = null;
+		if(_mindate.getYear() == _maxdate.getYear())
+		{
+			ydl = _mindate.datesUntil(_maxdate, Period.ofYears(1)).collect(Collectors.toList());
+		}
+		else 
+		{
+			ydl = _mindate.datesUntil(_maxdate.plusYears(1), Period.ofYears(1)).collect(Collectors.toList());
+		}
 		
 		for (LocalDate ld : ydl) 
 		{
@@ -163,7 +171,7 @@ public class DatePicker extends AbstractWidget
 		List<LocalDate> mdl = null;
 		//mmin1.datesUntil(mmin2, Period.ofMonths(1)).collect(Collectors.toList());
 		
-		if (mmin2.getMonthValue() == mmin1.getMonthValue()) 
+		if (mmin2.getMonthValue() == mmin1.getMonthValue() || (mmin1 != _mindate && mmin2 != _maxdate) || mmin2 != _maxdate) 
 		{
 			mdl = mmin1.datesUntil(mmin2, Period.ofMonths(1)).collect(Collectors.toList());
 		}

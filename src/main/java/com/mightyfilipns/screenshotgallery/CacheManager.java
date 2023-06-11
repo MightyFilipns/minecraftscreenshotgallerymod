@@ -10,6 +10,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
@@ -174,11 +176,11 @@ public class CacheManager
 		}
 		iscaching = false;
 	}
-	private static void cacheimg(File file) throws Throwable
+	private static void cacheimg(File file) throws IOException
 	{
 		BufferedImage img = null;
 		img = ImageIO.read(file);
-		int xsize =200;
+		int xsize = 200;
 		int ysize = 112;
 
 		final float ratio = xsize/(float)(ysize);
@@ -225,6 +227,23 @@ public class CacheManager
 		BasicFileAttributes bf = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
 		imgd.add(new imgdata(file,img.getWidth(),img.getHeight(),LocalDate.from(ZonedDateTime.ofInstant(bf.lastModifiedTime().toInstant(), ZoneId.systemDefault())),file.length()));
 	}
+	
+	/**
+	 * @param i pos in imgd list
+	 */
+	private static void deletefromcache(int i) 
+	{
+		if(imgd.get(i).getFile().exists())
+		{
+			try {
+				imgd.get(i).getFile().delete();
+			} catch (SecurityException e) 
+			{
+				e.printStackTrace();
+			}
+			imgd.remove(i);
+		}
+	}
 	private static void resort()
 	{
 		imgd.sort(new Comparator<imgdata>() {
@@ -257,7 +276,11 @@ public class CacheManager
 				return 0;
 			}
 		});
-		files.sort(new Comparator<File>() {
+		filesort(files);
+	}
+	private static void filesort(List<File> inp)
+	{
+		inp.sort(new Comparator<File>() {
 
 			@Override
 			public int compare(File o1, File o2) {
@@ -281,7 +304,6 @@ public class CacheManager
 						return 0;
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				return 0;
@@ -353,6 +375,24 @@ public class CacheManager
 			}
 		}, 2000);
 
+	}
+	public static void checkcache()
+	{
+		List<File> fls = Arrays.asList(imgcache.listFiles());
+		for (File file : fls) 
+		{	
+			//System.out.println(screenshootdir.getAbsolutePath()+"\\"+file.getFile().getName());
+			if(!Files.exists(Path.of(screenshootdir.getAbsolutePath()+"\\"+file.getName())))
+			{
+				try 
+				{
+					file.delete();
+				} catch (SecurityException e) 
+				{
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 	public static List<File> getfiles(LocalDate min,LocalDate max)
 	{

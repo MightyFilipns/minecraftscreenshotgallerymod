@@ -54,6 +54,7 @@ public class Dropboxng extends AbstractWidget
 		{
 			btn1.active = false;
 		}
+		active = true;
 	}
 	public int getvalue()
 	{
